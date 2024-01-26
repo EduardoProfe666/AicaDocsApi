@@ -54,14 +54,14 @@ public static class DocumentEndpoints
             var doc = await db.Documents.FirstOrDefaultAsync(x => x.Id == id, ct);
 
             if (doc is null)
-                return Results.BadRequest(new ApiResponse
+                return Results.NotFound(new ApiResponse
                     { ProblemDetails = new() { Detail = "No existe documentación con el id pasado" } });
-
-            if (!string.IsNullOrEmpty(docData.Title))
+            
+            if (!string.IsNullOrWhiteSpace(docData.Title))
                 doc.Title = docData.Title;
             if (DateOnly.FromDateTime(docData.DateOfValidity.DateTime) > DateOnly.FromDateTime(DateTime.UtcNow))
                 doc.DateOfValidity = DateOnly.FromDateTime(docData.DateOfValidity.DateTime);
-            if (!string.IsNullOrEmpty(docData.Code))
+            if (!string.IsNullOrWhiteSpace(docData.Code))
                 doc.Code = docData.Code;
             if (docData.Pages > 0)
                 doc.Pages = docData.Pages;
@@ -72,6 +72,5 @@ public static class DocumentEndpoints
             return Results.NoContent();
         });
         
-        // Make a MapPost that filters the data from docs database, according to all its props. 
     }
 }
