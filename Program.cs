@@ -1,21 +1,28 @@
+using System.Security.Claims;
 using AicaDocsApi.Database;
 using AicaDocsApi.Endpoints;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// builder.Services.AddAuthentication().AddBearerToken(IdentityConstants.BearerScheme);
+// builder.Services.AddAuthorizationBuilder();
+// builder.Services.AddIdentityCore<IdentityUser>()
+//     .AddEntityFrameworkStores<IdentityDbContext>()
+//     .AddApiEndpoints();
+
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddDbContext<DocumentDb>(opt => opt.UseInMemoryDatabase("Documents"));
-builder.Services.AddSwaggerGen();
+builder.Services.AddDbContext<DocumentDb>(opt => opt.UseInMemoryDatabase("AicaDocs"));
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1",
         new OpenApiInfo
         {
-            Title = "Aica Docs Api", Version = "0.0.1",
+            Title = "Aica Docs Api", Version = "0.1",
             Contact = new()
             {
                 Name = "Lilian Rosa Rojas Rodríguez | Eduardo Alejandro González Martell", Email = "eduardoprofe666@gmail.com",
@@ -31,12 +38,15 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// app.MapIdentityApi<IdentityUser>();
+// app.MapGet("welcome", (ClaimsPrincipal cp) => $"Welcome {cp.Identity!.Name}")
+//     .RequireAuthorization();
 
 app.UseHttpsRedirection();
 app.MapGeneralEndpoints();

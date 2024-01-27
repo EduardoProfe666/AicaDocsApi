@@ -1,6 +1,7 @@
 using AicaDocsApi.Database;
 using AicaDocsApi.Dto;
 using AicaDocsApi.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
 namespace AicaDocsApi.Endpoints;
@@ -10,18 +11,29 @@ public static class DocumentEndpoints
     public static void MapDocumentEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/document")
-            .WithOpenApi();
+            .WithOpenApi()
+            .WithTags(["Document"]);
 
-        group.MapGet("", async (DocumentDb db, CancellationToken ct) =>
+        group.MapGet("", GetDocuments)
+            .WithSummary("Get all documents");
+
+        group.MapPost("", PostDocument)
+            .WithSummary("Create a new document");
+
+        group.MapPut("/{id:int}", PutDocument)
+            .WithSummary("Update an specific document");
+
+        static async Task<Ok<ApiResponse<IEnumerable<Document>>>> GetDocuments(DocumentDb db, CancellationToken ct)
         {
             var data = await db.Documents.ToListAsync(ct);
-            return Results.Ok(new ApiResponse<IEnumerable<Document>>
+            return TypedResults.Ok(new ApiResponse<IEnumerable<Document>>
             {
                 Data = data
-            });
-        });
+            });   
+        }
 
-        group.MapPost("", async (DocumentCreatedDto doc, DocumentDb db, CancellationToken cancellationToken) =>
+        static async Task<Results<Created,BadRequest<ApiResponse>>> PostDocument(DocumentCreatedDto doc, DocumentDb db,
+            CancellationToken cancellationToken)
         {
             string? message = default;
             if (doc.Pages <= 0)
@@ -34,7 +46,7 @@ public static class DocumentEndpoints
                 message = "La fecha no puede ser posterior al día actual";
 
             if (message is not null)
-                return Results.BadRequest(new ApiResponse
+                return TypedResults.BadRequest(new ApiResponse
                 {
                     ProblemDetails = new()
                     {
@@ -46,15 +58,15 @@ public static class DocumentEndpoints
             db.Documents.Add(doc.ToNewDocument());
             await db.SaveChangesAsync(cancellationToken);
 
-            return Results.NoContent();
-        });
+            return TypedResults.Created();
+        }
 
-        group.MapPut("/{id:int}", async (int id, DocumentPutDto docData, DocumentDb db, CancellationToken ct) =>
+        static async Task<Results<NotFound<ApiResponse>,Ok>> PutDocument(int id, DocumentUpdateDto docData, DocumentDb db, CancellationToken ct)
         {
             var doc = await db.Documents.FirstOrDefaultAsync(x => x.Id == id, ct);
 
             if (doc is null)
-                return Results.NotFound(new ApiResponse
+                return TypedResults.NotFound(new ApiResponse
                     { ProblemDetails = new() { Detail = "No existe documentación con el id pasado" } });
             
             if (!string.IsNullOrWhiteSpace(docData.Title))
@@ -69,8 +81,7 @@ public static class DocumentEndpoints
                 doc.Edition = docData.Edition;
             await db.SaveChangesAsync(ct);
 
-            return Results.NoContent();
-        });
-        
+            return TypedResults.Ok();
+        }
     }
 }

@@ -6,7 +6,6 @@ public static class GeneralEndpoints
     {
         var group = app.MapGroup("")
             .WithTags(["General"])
-            .WithName("General")
             .WithOpenApi();
 
         app.MapGet("/", () => Results.Redirect("/swagger/index.html")).ExcludeFromDescription();

@@ -1,8 +1,9 @@
+
 using AicaDocsApi.Models;
 
 namespace AicaDocsApi.Dto;
 
-public class DocumentPutDto: IDocumentDto
+public class DocumentUpdateDto: IDocumentDto
 {
     public required string Code { get; set; }
     public required string Title { get; set; }
