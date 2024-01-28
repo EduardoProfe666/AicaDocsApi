@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using AicaDocsApi.Database;
 using AicaDocsApi.Endpoints;
+using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -14,9 +15,10 @@ var builder = WebApplication.CreateBuilder(args);
 //     .AddEntityFrameworkStores<IdentityDbContext>()
 //     .AddApiEndpoints();
 
+builder.Services.AddValidatorsFromAssemblyContaining<Program>(ServiceLifetime.Singleton);
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddDbContext<DocumentDb>(opt => opt.UseInMemoryDatabase("AicaDocs"));
+builder.Services.AddDbContext<AicaDocsDb>(opt => opt.UseInMemoryDatabase("AicaDocs"));
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1",

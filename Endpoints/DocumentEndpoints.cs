@@ -15,15 +15,12 @@ public static class DocumentEndpoints
             .WithTags(["Document"]);
 
         group.MapGet("", GetDocuments)
-            .WithSummary("Get all documents");
+            .WithSummary("ONLY FOR TESTING. Get all documents");
 
         group.MapPost("", PostDocument)
             .WithSummary("Create a new document");
 
-        group.MapPut("/{id:int}", PutDocument)
-            .WithSummary("Update an specific document");
-
-        static async Task<Ok<ApiResponse<IEnumerable<Document>>>> GetDocuments(DocumentDb db, CancellationToken ct)
+        static async Task<Ok<ApiResponse<IEnumerable<Document>>>> GetDocuments(AicaDocsDb db, CancellationToken ct)
         {
             var data = await db.Documents.ToListAsync(ct);
             return TypedResults.Ok(new ApiResponse<IEnumerable<Document>>
@@ -32,7 +29,7 @@ public static class DocumentEndpoints
             });   
         }
 
-        static async Task<Results<Created,BadRequest<ApiResponse>>> PostDocument(DocumentCreatedDto doc, DocumentDb db,
+        static async Task<Results<Created,BadRequest<ApiResponse>>> PostDocument(DocumentCreatedDto doc, AicaDocsDb db,
             CancellationToken cancellationToken)
         {
             string? message = default;
@@ -60,28 +57,6 @@ public static class DocumentEndpoints
 
             return TypedResults.Created();
         }
-
-        static async Task<Results<NotFound<ApiResponse>,Ok>> PutDocument(int id, DocumentUpdateDto docData, DocumentDb db, CancellationToken ct)
-        {
-            var doc = await db.Documents.FirstOrDefaultAsync(x => x.Id == id, ct);
-
-            if (doc is null)
-                return TypedResults.NotFound(new ApiResponse
-                    { ProblemDetails = new() { Detail = "No existe documentación con el id pasado" } });
-            
-            if (!string.IsNullOrWhiteSpace(docData.Title))
-                doc.Title = docData.Title;
-            if (DateOnly.FromDateTime(docData.DateOfValidity.DateTime) > DateOnly.FromDateTime(DateTime.UtcNow))
-                doc.DateOfValidity = DateOnly.FromDateTime(docData.DateOfValidity.DateTime);
-            if (!string.IsNullOrWhiteSpace(docData.Code))
-                doc.Code = docData.Code;
-            if (docData.Pages > 0)
-                doc.Pages = docData.Pages;
-            if (docData.Edition > 0)
-                doc.Edition = docData.Edition;
-            await db.SaveChangesAsync(ct);
-
-            return TypedResults.Ok();
-        }
+        
     }
 }

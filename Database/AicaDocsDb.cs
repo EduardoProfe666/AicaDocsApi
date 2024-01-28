@@ -3,11 +3,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AicaDocsApi.Database;
 
-public class DocumentDb : DbContext
+public class AicaDocsDb : DbContext
 {
-    public DocumentDb(DbContextOptions<DocumentDb> options)
+    public AicaDocsDb(DbContextOptions<AicaDocsDb> options)
         : base(options) { }
 
     public DbSet<Document> Documents => Set<Document>();
-    
+
 }

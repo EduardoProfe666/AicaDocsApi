@@ -8,8 +8,8 @@ public static class GeneralEndpoints
             .WithTags(["General"])
             .WithOpenApi();
 
-        app.MapGet("/", () => Results.Redirect("/swagger/index.html")).ExcludeFromDescription();
-        app.MapGet("/docs", () => Results.Redirect("/swagger/index.html")).ExcludeFromDescription();
+        group.MapGet("/", () => Results.Redirect("/swagger/index.html")).ExcludeFromDescription();
+        group.MapGet("/docs", () => Results.Redirect("/swagger/index.html")).ExcludeFromDescription();
         
     }
 }
