@@ -1,6 +1,10 @@
 using AicaDocsApi.Database;
 using AicaDocsApi.Dto;
+using AicaDocsApi.Dto.Documents;
 using AicaDocsApi.Models;
+using AicaDocsApi.Responses;
+using AicaDocsApi.Validators;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
 namespace AicaDocsApi.Endpoints;
@@ -10,19 +14,30 @@ public static class DocumentEndpoints
     public static void MapDocumentEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/document")
-            .WithOpenApi();
+            .WithOpenApi()
+            .WithTags(["Document"]);
 
-        group.MapGet("", async (DocumentDb db, CancellationToken ct) =>
+        // ToDo: Quitar este endpoint en despliegue
+        group.MapGet("", GetDocuments)
+            .WithSummary("ONLY FOR TESTING. Get all documents");
+
+        group.MapPost("", PostDocument)
+            .WithSummary("Create a new document")
+            .AddEndpointFilter<ValidationFilter<DocumentCreatedDto>>();
+
+        static async Task<Ok<ApiResponse<IEnumerable<Document>>>> GetDocuments(AicaDocsDb db, CancellationToken ct)
         {
             var data = await db.Documents.ToListAsync(ct);
-            return Results.Ok(new ApiResponse<IEnumerable<Document>>
+            return TypedResults.Ok(new ApiResponse<IEnumerable<Document>>
             {
                 Data = data
-            });
-        });
+            });   
+        }
 
-        group.MapPost("", async (DocumentCreatedDto doc, DocumentDb db, CancellationToken cancellationToken) =>
+        static async Task<Results<Created,BadRequest<ApiResponse>>> PostDocument(DocumentCreatedDto doc, AicaDocsDb db,
+            CancellationToken cancellationToken)
         {
+            // ToDo: Estas Validaciones van en Validators y por tanto no son necesarias
             string? message = default;
             if (doc.Pages <= 0)
                 message = "Las páginas deben ser mayor que 0";
@@ -34,7 +49,7 @@ public static class DocumentEndpoints
                 message = "La fecha no puede ser posterior al día actual";
 
             if (message is not null)
-                return Results.BadRequest(new ApiResponse
+                return TypedResults.BadRequest(new ApiResponse
                 {
                     ProblemDetails = new()
                     {
@@ -46,32 +61,8 @@ public static class DocumentEndpoints
             db.Documents.Add(doc.ToNewDocument());
             await db.SaveChangesAsync(cancellationToken);
 
-            return Results.NoContent();
-        });
-
-        group.MapPut("/{id:int}", async (int id, DocumentPutDto docData, DocumentDb db, CancellationToken ct) =>
-        {
-            var doc = await db.Documents.FirstOrDefaultAsync(x => x.Id == id, ct);
-
-            if (doc is null)
-                return Results.BadRequest(new ApiResponse
-                    { ProblemDetails = new() { Detail = "No existe documentación con el id pasado" } });
-
-            if (!string.IsNullOrEmpty(docData.Title))
-                doc.Title = docData.Title;
-            if (DateOnly.FromDateTime(docData.DateOfValidity.DateTime) > DateOnly.FromDateTime(DateTime.UtcNow))
-                doc.DateOfValidity = DateOnly.FromDateTime(docData.DateOfValidity.DateTime);
-            if (!string.IsNullOrEmpty(docData.Code))
-                doc.Code = docData.Code;
-            if (docData.Pages > 0)
-                doc.Pages = docData.Pages;
-            if (docData.Edition > 0)
-                doc.Edition = docData.Edition;
-            await db.SaveChangesAsync(ct);
-
-            return Results.NoContent();
-        });
+            return TypedResults.Created();
+        }
         
-        // Make a MapPost that filters the data from docs database, according to all its props. 
     }
 }

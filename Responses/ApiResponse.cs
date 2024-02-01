@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace AicaDocsApi.Dto;
+namespace AicaDocsApi.Responses;
 
 public class ApiResponse
 {
+
     public ProblemDetails? ProblemDetails { get; set; }
 }
 
