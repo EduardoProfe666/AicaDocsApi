@@ -1,6 +1,7 @@
 @AicaDocsApi_HostAddress = http://localhost:5031
 
-GET {{AicaDocsApi_HostAddress}}/weatherforecast/
+GET {{AicaDocsApi_HostAddress}}/document
 Accept: application/json
 
 ###
+
