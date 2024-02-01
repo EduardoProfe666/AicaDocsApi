@@ -1,6 +1,6 @@
 namespace AicaDocsApi.Dto.Nomenclators;
 
-public class NomenclatorDto
+public class NomenclatorUpdateDto
 {
     public required string Name { get; set; }
 }

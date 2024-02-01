@@ -1,6 +1,9 @@
 using AicaDocsApi.Database;
 using AicaDocsApi.Dto;
+using AicaDocsApi.Dto.Documents;
 using AicaDocsApi.Models;
+using AicaDocsApi.Responses;
+using AicaDocsApi.Validators;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,11 +17,13 @@ public static class DocumentEndpoints
             .WithOpenApi()
             .WithTags(["Document"]);
 
+        // ToDo: Quitar este endpoint en despliegue
         group.MapGet("", GetDocuments)
             .WithSummary("ONLY FOR TESTING. Get all documents");
 
         group.MapPost("", PostDocument)
-            .WithSummary("Create a new document");
+            .WithSummary("Create a new document")
+            .AddEndpointFilter<ValidationFilter<DocumentCreatedDto>>();
 
         static async Task<Ok<ApiResponse<IEnumerable<Document>>>> GetDocuments(AicaDocsDb db, CancellationToken ct)
         {
@@ -32,6 +37,7 @@ public static class DocumentEndpoints
         static async Task<Results<Created,BadRequest<ApiResponse>>> PostDocument(DocumentCreatedDto doc, AicaDocsDb db,
             CancellationToken cancellationToken)
         {
+            // ToDo: Estas Validaciones van en Validators y por tanto no son necesarias
             string? message = default;
             if (doc.Pages <= 0)
                 message = "Las páginas deben ser mayor que 0";
