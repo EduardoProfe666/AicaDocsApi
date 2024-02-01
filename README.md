@@ -33,7 +33,7 @@ documentación. Para ello, se definen los siguientes requisitos:
 
 
 ## 🖼️ Modelo físico de la base de datos
-![modelo fisico](assets/modelo.jpg)
+![modelo fisico](Assets/modelo.jpg)
 
 ## 📶 Configuración de la conexión a la base de datos
 Para poder configurar la conexión a la base de datos en postgreSQL siga los siguientes pasos:
