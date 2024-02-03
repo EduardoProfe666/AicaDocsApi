@@ -25,12 +25,15 @@ public static class DocumentEndpoints
             .WithSummary("Create a new document")
             .AddEndpointFilter<ValidationFilter<DocumentCreatedDto>>();
 
-        static async Task<Ok<ApiResponse<IEnumerable<Document>>>> GetDocuments(AicaDocsDb db, CancellationToken ct)
+        static async Task<Ok<ApiResponse<IEnumerable<DocumentViewDto>>>> GetDocuments(AicaDocsDb db, CancellationToken ct)
         {
-            var data = await db.Documents.ToListAsync(ct);
-            return TypedResults.Ok(new ApiResponse<IEnumerable<Document>>
+            var dataReturn = new List<DocumentViewDto>();
+            (await db.Documents.ToListAsync(ct))
+                .ForEach(document => dataReturn.Add(new DocumentViewDto(document)));
+            
+            return TypedResults.Ok(new ApiResponse<IEnumerable<DocumentViewDto>>
             {
-                Data = data
+                Data = dataReturn
             });   
         }
 
