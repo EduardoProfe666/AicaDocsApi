@@ -12,8 +12,8 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddEndpointsApiExplorer();
 
-DotEnv.Load();
-var connection = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+
+var connection = ConstructConnectionString();
 builder.Services.AddDbContext<AicaDocsDb>(x => x.UseNpgsql(connection));
 // builder.Services.AddDbContext<AicaDocsDb>(x => x.UseSqlite("DataSource=db.dat"));
 // builder.Services.AddDbContext<AicaDocsDb>(opt => opt.UseInMemoryDatabase("AicaDocs"));
@@ -33,7 +33,7 @@ builder.Services.AddSwaggerGen(c =>
             License = new() { Name = "MIT License" },
             Description = """
                           # 📝 Aica Docs Api
-                          A simple API built with Asp.Net Core 8 that manages the 
+                          A simple API built with Asp.Net Core 8 that manages the
                           control documentation of the system of Quality Assurance
                           in AICA+ Pharmaceutical Laboratories.
                           """
@@ -53,3 +53,14 @@ app.MapDownloadEndpoints();
 app.MapNomenclatorEndpoints();
 
 app.Run();
+
+string ConstructConnectionString()
+{
+    DotEnv.Load();
+    var server = Environment.GetEnvironmentVariable("SERVER");
+    var port = Environment.GetEnvironmentVariable("PORT");
+    var database = Environment.GetEnvironmentVariable("DATABASE");
+    var user = Environment.GetEnvironmentVariable("USER");
+    var password = Environment.GetEnvironmentVariable("PASSWORD");
+    return $"Server={server};Port={port};Database={database};User Id={user};password={password}";
+}
