@@ -15,26 +15,26 @@ public class AicaDocsDb : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Document
-        modelBuilder.Entity<Document>()
-            .HasOne(e => e.Type)
-            .WithMany()
+        modelBuilder.Entity<Nomenclator>()
+            .HasMany<Document>()
+            .WithOne()
             .HasForeignKey(e => e.TypeId)
             .IsRequired();
-        modelBuilder.Entity<Document>()
-            .HasOne(e => e.Process)
-            .WithMany()
+        modelBuilder.Entity<Nomenclator>()
+            .HasMany<Document>()
+            .WithOne()
             .HasForeignKey(e => e.ProcessId)
             .IsRequired();
-        modelBuilder.Entity<Document>()
-            .HasOne(e => e.Scope)
-            .WithMany()
+        modelBuilder.Entity<Nomenclator>()
+            .HasMany<Document>()
+            .WithOne()
             .HasForeignKey(e => e.ScopeId)
             .IsRequired();
         
         // Download
-        modelBuilder.Entity<Download>()
-            .HasOne(e => e.Reason)
-            .WithMany()
+        modelBuilder.Entity<Nomenclator>()
+            .HasMany<Download>()
+            .WithOne()
             .HasForeignKey(e => e.ReasonId)
             .IsRequired();
         modelBuilder.Entity<Document>()

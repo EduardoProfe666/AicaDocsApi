@@ -17,7 +17,7 @@ public class DocumentCreatedDto
         return new Models.Document
         {
             Code = Code, Edition = Edition, Pages = Pages, Title = Title,
-            DateOfValidity = DateOnly.FromDateTime(DateOfValidity.DateTime),
+            DateOfValidity = DateOfValidity.UtcDateTime,
             TypeId = TypeId, ProcessId = ProcessId, ScopeId = ScopeId
         };
     }

@@ -7,7 +7,6 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddEndpointsApiExplorer();
@@ -23,7 +22,7 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1",
         new OpenApiInfo
         {
-            Title = "Aica Docs Api", Version = "0.2",
+            Title = "Aica Docs Api", Version = "0.6",
             Contact = new()
             {
                 Name = "Lilian Rosa Rojas Rodríguez | Eduardo Alejandro González Martell",

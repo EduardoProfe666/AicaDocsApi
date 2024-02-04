@@ -20,16 +20,22 @@ public class DocumentCreatedDtoValidator : AbstractValidator<DocumentCreatedDto>
             .WithMessage("Code must not be empty");
 
         RuleFor(e => e.Edition)
-            .GreaterThan(e => 0)
-            .WithMessage("Edition must be greater than 0");
+            .GreaterThan((short)0)
+            .WithMessage("Edition must be greater than 0")
+            .NotNull()
+            .WithMessage("Edition cannot be null");
         
         RuleFor(e => e.Pages)
-            .GreaterThan(e => 0)
-            .WithMessage("Pages must be greater than 0");
+            .GreaterThan((short)0)
+            .WithMessage("Pages must be greater than 0")
+            .NotNull()
+            .WithMessage("Pages cannot be null");
 
         RuleFor(e => e.DateOfValidity)
-            .LessThanOrEqualTo(e => DateTimeOffset.UtcNow)
-            .WithMessage("Date of validity must be less or equal than today`s day");
+            .LessThanOrEqualTo(DateTimeOffset.UtcNow)
+            .WithMessage("Date of validity must be less or equal than today`s day")
+            .NotNull()
+            .WithMessage("Date of validity cannot be null");
 
 
 
