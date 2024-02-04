@@ -26,7 +26,10 @@ public static class DocumentEndpoints
             .WithSummary("Create a new document")
             .AddEndpointFilter<ValidationFilter<DocumentCreatedDto>>();
 
-        static async Task<Results<Ok<ApiResponse<DocumentViewDto>>, NotFound<ApiResponse>> GetDocumentById(int id, AicaDocsDb db,
+        group.MapGet("/{id:int}", GetDocumentById)
+            .WithSummary("Get the document with th given id");
+
+        static async Task<Results<Ok<ApiResponse<DocumentViewDto>>, NotFound<ApiResponse>>> GetDocumentById(int id, AicaDocsDb db,
             CancellationToken ct)
         {
             var doc = await db.Documents.FirstOrDefaultAsync(e => e.Id == id, cancellationToken: ct);
