@@ -12,7 +12,7 @@ public class ValidationFilter<T> : IEndpointFilter
         var entity = ctx.Arguments
             .OfType<T>()
             .FirstOrDefault(a => a?.GetType() == typeof(T));
-        if (entity is null) return TypedResults.Problem("Could not find type to validate");
+        if (entity is null) return TypedResults.Problem("No se pudo encontrar el tipo para validar");
         
         var validation = await validator.ValidateAsync(entity);
         if (validation.IsValid)

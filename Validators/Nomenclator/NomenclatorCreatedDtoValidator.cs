@@ -12,6 +12,7 @@ public class NomenclatorCreatedDtoValidator : AbstractValidator<NomenclatorCreat
             .WithMessage("Name must have a maximum length of 64 caracters")
             .NotEmpty()
             .WithMessage("Name must not be empty");
+        
         RuleFor(e => e.Type)
             .IsInEnum()
             .WithMessage("Type must be valid");

@@ -1,6 +1,6 @@
 namespace AicaDocsApi.Models;
 
-public enum TypeOfNomenclator : byte
+public enum TypeOfNomenclator
 {
     ProcessOfDocument,
     ReasonOfDownload,

@@ -38,9 +38,15 @@ documentación. Para ello, se definen los siguientes requisitos:
 ## 📶 Configuración de la conexión a la base de datos
 Para poder configurar la conexión a la base de datos en postgreSQL siga los siguientes pasos:
 1. Cree en la ruta raíz del proyecto un archivo `.env`
-2. En dicho archivo coloque la siguiente línea, sustituyendo INFO por la información 
+2. En dicho archivo coloque las siguientes líneas, sustituyendo `INFO` por la información 
 correspondiente en cada caso: 
-`CONNECTION_STRING = Server=INFO;Port=INFO;Database=INFO;User Id=INFO;password=INFO`
+``` dotenv
+SERVER=INFO
+PORT=INFO
+DATABASE=INFO
+USER=INFO
+PASSWORD=INFO
+```
 3. Si no tiene la base de datos de Aica, en la consola escriba el siguiente comando: `dotnet ef database update`.
 Asegúrese que tiene las `Migrations`, si no ejecute antes el comando: `dotnet ef migrations add InitialCreate`
 

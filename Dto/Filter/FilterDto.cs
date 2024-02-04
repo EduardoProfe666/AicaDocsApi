@@ -11,4 +11,8 @@ public class FilterDto
     public required int? TypeId { get; set; }
     public required int? ProcessId { get; set; }
     public required int? ScopeId { get; set; }
+    
+    public required PaginationParams PaginationParams { get; set; }
+    public required SortByDocument SortByDocument { get; set; } = SortByDocument.Id;
+    public required SortOrder SortOrder { get; set; } = SortOrder.Asc;
 }

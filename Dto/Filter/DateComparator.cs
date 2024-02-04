@@ -1,6 +1,6 @@
 namespace AicaDocsApi.Dto.Filter;
 
-public enum DateComparator : byte
+public enum DateComparator
 {
     Equal,
     Greater,
