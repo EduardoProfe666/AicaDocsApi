@@ -1,6 +1,6 @@
 namespace AicaDocsApi.Models;
 
-public enum Format
+public enum Format : short
 {
     Pdf,
     Word

@@ -1,9 +1,9 @@
 using AicaDocsApi.Database;
-using AicaDocsApi.Dto;
 using AicaDocsApi.Dto.Documents;
 using AicaDocsApi.Models;
 using AicaDocsApi.Responses;
 using AicaDocsApi.Validators;
+using AicaDocsApi.Validators.Utils;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +19,7 @@ public static class DocumentEndpoints
             .WithTags(["Document"]);
 
         // ToDo: Quitar este endpoint en despliegue
-        group.MapGet("", GetDocuments)
+        group.MapGet("", async (AicaDocsDb db, CancellationToken ct) => await db.Documents.ToListAsync(ct))
             .WithSummary("ONLY FOR TESTING. Get all documents");
 
         group.MapPost("", PostDocument)
@@ -29,7 +29,8 @@ public static class DocumentEndpoints
         group.MapGet("/{id:int}", GetDocumentById)
             .WithSummary("Get the document with th given id");
 
-        static async Task<Results<Ok<ApiResponse<DocumentViewDto>>, NotFound<ApiResponse>>> GetDocumentById(int id, AicaDocsDb db,
+        static async Task<Results<Ok<ApiResponse<Document>>, NotFound<ApiResponse>>> GetDocumentById(int id,
+            AicaDocsDb db,
             CancellationToken ct)
         {
             var doc = await db.Documents.FirstOrDefaultAsync(e => e.Id == id, cancellationToken: ct);
@@ -45,32 +46,32 @@ public static class DocumentEndpoints
                 });
             }
 
-            return TypedResults.Ok(new ApiResponse<DocumentViewDto>()
+            return TypedResults.Ok(new ApiResponse<Document>()
             {
-                Data = new DocumentViewDto(doc)
+                Data = doc
             });
         }
 
-        static async Task<Ok<ApiResponse<IEnumerable<DocumentViewDto>>>> GetDocuments(AicaDocsDb db, CancellationToken ct)
+        static async Task<Results<Created, BadRequest<ApiResponse>, ValidationProblem>> PostDocument(DocumentCreatedDto doc,
+            AicaDocsDb db,
+            CancellationToken ct)
         {
-            var dataReturn = new List<DocumentViewDto>();
-            (await db.Documents.ToListAsync(ct))
-                .ForEach(document => dataReturn.Add(new DocumentViewDto(document)));
+            if (!await ValidateUtils.ValidateNomenclatorId(doc.ProcessId, TypeOfNomenclator.ProcessOfDocument, db, ct))
+                return TypedResults.BadRequest(new ApiResponse()
+                    { ProblemDetails = new() { Status = 400, Detail = "Document Process must be valid" } });
             
-            return TypedResults.Ok(new ApiResponse<IEnumerable<DocumentViewDto>>
-            {
-                Data = dataReturn
-            });   
-        }
-
-        static async Task<Results<Created, BadRequest>> PostDocument(DocumentCreatedDto doc, AicaDocsDb db,
-            CancellationToken cancellationToken)
-        {
+            if (!await ValidateUtils.ValidateNomenclatorId(doc.ScopeId, TypeOfNomenclator.ScopeOfDocument, db, ct))
+                return TypedResults.BadRequest(new ApiResponse()
+                    { ProblemDetails = new() { Status = 400, Detail = "Document Scope must be valid" } });
+            
+            if (!await ValidateUtils.ValidateNomenclatorId(doc.TypeId, TypeOfNomenclator.TypeOfDocument, db, ct))
+                return TypedResults.BadRequest(new ApiResponse()
+                    { ProblemDetails = new() { Status = 400, Detail = "Document Type must be valid" } });
+            
             db.Documents.Add(doc.ToNewDocument());
-            await db.SaveChangesAsync(cancellationToken);
+            await db.SaveChangesAsync(ct);
 
             return TypedResults.Created();
         }
-        
     }
 }

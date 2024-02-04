@@ -2,7 +2,7 @@ using AicaDocsApi.Database;
 using AicaDocsApi.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace AicaDocsApi.Validators;
+namespace AicaDocsApi.Validators.Utils;
 
 public static class ValidateUtils
 {
