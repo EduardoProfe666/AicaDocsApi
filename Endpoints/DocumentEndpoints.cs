@@ -1,10 +1,11 @@
 using AicaDocsApi.Database;
-using AicaDocsApi.Dto;
 using AicaDocsApi.Dto.Documents;
 using AicaDocsApi.Models;
 using AicaDocsApi.Responses;
 using AicaDocsApi.Validators;
+using AicaDocsApi.Validators.Utils;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace AicaDocsApi.Endpoints;
@@ -18,51 +19,59 @@ public static class DocumentEndpoints
             .WithTags(["Document"]);
 
         // ToDo: Quitar este endpoint en despliegue
-        group.MapGet("", GetDocuments)
+        group.MapGet("", async (AicaDocsDb db, CancellationToken ct) => await db.Documents.ToListAsync(ct))
             .WithSummary("ONLY FOR TESTING. Get all documents");
 
         group.MapPost("", PostDocument)
             .WithSummary("Create a new document")
             .AddEndpointFilter<ValidationFilter<DocumentCreatedDto>>();
 
-        static async Task<Ok<ApiResponse<IEnumerable<Document>>>> GetDocuments(AicaDocsDb db, CancellationToken ct)
+        group.MapGet("/{id:int}", GetDocumentById)
+            .WithSummary("Get the document with th given id");
+
+        static async Task<Results<Ok<ApiResponse<Document>>, NotFound<ApiResponse>>> GetDocumentById(int id,
+            AicaDocsDb db,
+            CancellationToken ct)
         {
-            var data = await db.Documents.ToListAsync(ct);
-            return TypedResults.Ok(new ApiResponse<IEnumerable<Document>>
+            var doc = await db.Documents.FirstOrDefaultAsync(e => e.Id == id, cancellationToken: ct);
+
+            if (doc is null)
             {
-                Data = data
-            });   
-        }
-
-        static async Task<Results<Created,BadRequest<ApiResponse>>> PostDocument(DocumentCreatedDto doc, AicaDocsDb db,
-            CancellationToken cancellationToken)
-        {
-            // ToDo: Estas Validaciones van en Validators y por tanto no son necesarias
-            string? message = default;
-            if (doc.Pages <= 0)
-                message = "Las páginas deben ser mayor que 0";
-            else if (doc.Edition <= 0)
-                message = "La edición debe ser mayor que 0";
-            else if (string.IsNullOrEmpty(doc.Title))
-                message = "El título es requerido";
-            else if (DateOnly.FromDateTime(doc.DateOfValidity.DateTime) > DateOnly.FromDateTime(DateTime.UtcNow))
-                message = "La fecha no puede ser posterior al día actual";
-
-            if (message is not null)
-                return TypedResults.BadRequest(new ApiResponse
+                return TypedResults.NotFound(new ApiResponse()
                 {
-                    ProblemDetails = new()
+                    ProblemDetails = new ProblemDetails()
                     {
-                        Detail = message
+                        Status = 404, Detail = "Doesn`t exist a document with the given id"
                     }
                 });
+            }
 
+            return TypedResults.Ok(new ApiResponse<Document>()
+            {
+                Data = doc
+            });
+        }
 
+        static async Task<Results<Created, BadRequest<ApiResponse>, ValidationProblem>> PostDocument(DocumentCreatedDto doc,
+            AicaDocsDb db,
+            CancellationToken ct)
+        {
+            if (!await ValidateUtils.ValidateNomenclatorId(doc.ProcessId, TypeOfNomenclator.ProcessOfDocument, db, ct))
+                return TypedResults.BadRequest(new ApiResponse()
+                    { ProblemDetails = new() { Status = 400, Detail = "Document Process must be valid" } });
+            
+            if (!await ValidateUtils.ValidateNomenclatorId(doc.ScopeId, TypeOfNomenclator.ScopeOfDocument, db, ct))
+                return TypedResults.BadRequest(new ApiResponse()
+                    { ProblemDetails = new() { Status = 400, Detail = "Document Scope must be valid" } });
+            
+            if (!await ValidateUtils.ValidateNomenclatorId(doc.TypeId, TypeOfNomenclator.TypeOfDocument, db, ct))
+                return TypedResults.BadRequest(new ApiResponse()
+                    { ProblemDetails = new() { Status = 400, Detail = "Document Type must be valid" } });
+            
             db.Documents.Add(doc.ToNewDocument());
-            await db.SaveChangesAsync(cancellationToken);
+            await db.SaveChangesAsync(ct);
 
             return TypedResults.Created();
         }
-        
     }
 }

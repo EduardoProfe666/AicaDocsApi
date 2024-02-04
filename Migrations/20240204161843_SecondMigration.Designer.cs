@@ -3,6 +3,7 @@ using System;
 using AicaDocsApi.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AicaDocsApi.Migrations
 {
     [DbContext(typeof(AicaDocsDb))]
-    partial class AicaDocsDbModelSnapshot : ModelSnapshot
+    [Migration("20240204161843_SecondMigration")]
+    partial class SecondMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,8 +37,8 @@ namespace AicaDocsApi.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("DateOfValidity")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateOnly>("DateOfValidity")
+                        .HasColumnType("date");
 
                     b.Property<short>("Edition")
                         .HasColumnType("smallint");
