@@ -16,14 +16,14 @@ public static class NomenclatorEndpoints
     {
         var group = app.MapGroup("/nomenclator")
             .WithOpenApi()
-            .WithTags(["Nomenclator"]);
+            .WithTags(["Nomenclators"]);
 
         // ToDo: Quitar en despliegue
         group.MapGet("", async (AicaDocsDb db, CancellationToken ct) => await db.Nomenclators.ToListAsync(ct))
             .WithSummary("ONLY FOR TESTING. Get all nomenclators");
 
         group.MapPost("/filter", FilterNomenclator)
-            .WithSummary("Get nomenclators of an specific type")
+            .WithSummary("Get nomenclators with specific filters, sorts and pagination")
             .AddEndpointFilter<ValidationFilter<FilterNomenclatorDto>>();
 
         group.MapGet("/{id:int}", GetNomenclatorById)

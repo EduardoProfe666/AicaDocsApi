@@ -1,5 +1,8 @@
 using AicaDocsApi.Database;
 using AicaDocsApi.Dto.Documents;
+using AicaDocsApi.Dto.Documents.Filter;
+using AicaDocsApi.Dto.Downloads.Filter;
+using AicaDocsApi.Dto.FilterCommons;
 using AicaDocsApi.Models;
 using AicaDocsApi.Responses;
 using AicaDocsApi.Validators;
@@ -16,18 +19,23 @@ public static class DocumentEndpoints
     {
         var group = app.MapGroup("/document")
             .WithOpenApi()
-            .WithTags(["Document"]);
+            .WithTags(["Documents"]);
 
         // ToDo: Quitar este endpoint en despliegue
         group.MapGet("", async (AicaDocsDb db, CancellationToken ct) => await db.Documents.ToListAsync(ct))
             .WithSummary("ONLY FOR TESTING. Get all documents");
+        
+        group.MapPost("/filter", FilterDocument)
+            .WithSummary("Get documents with specific filters, sorts and pagination")
+            .AddEndpointFilter<ValidationFilter<FilterDocumentDto>>();
+            
 
+        group.MapGet("/{id:int}", GetDocumentById)
+            .WithSummary("Get the document with the given id");
+        
         group.MapPost("", PostDocument)
             .WithSummary("Create a new document")
             .AddEndpointFilter<ValidationFilter<DocumentCreatedDto>>();
-
-        group.MapGet("/{id:int}", GetDocumentById)
-            .WithSummary("Get the document with th given id");
 
         static async Task<Results<Ok<ApiResponse<Document>>, NotFound<ApiResponse>>> GetDocumentById(int id,
             AicaDocsDb db,
@@ -73,5 +81,122 @@ public static class DocumentEndpoints
 
             return TypedResults.Created();
         }
+        
+        
+        static async Task<Results<Ok<ApiResponse<IEnumerable<Document>>>, ValidationProblem, BadRequest<ApiResponse>>>
+            FilterDocument(
+                FilterDocumentDto filter,
+                AicaDocsDb db, CancellationToken ct)
+        {
+            
+            if (filter.TypeId is not null && !await ValidateUtils.ValidateNomenclatorId(filter.TypeId, TypeOfNomenclator.TypeOfDocument, db, ct))
+                return TypedResults.BadRequest(new ApiResponse()
+                    { ProblemDetails = new() { Status = 400, Detail = "Type of document must be valid" } });
+            
+            if (filter.ProcessId is not null && !await ValidateUtils.ValidateNomenclatorId(filter.ProcessId, TypeOfNomenclator.ProcessOfDocument, db, ct))
+                return TypedResults.BadRequest(new ApiResponse()
+                    { ProblemDetails = new() { Status = 400, Detail = "Process of document must be valid" } });
+
+            if (filter.ScopeId is not null && !await ValidateUtils.ValidateNomenclatorId(filter.ScopeId, TypeOfNomenclator.ScopeOfDocument, db, ct))
+                return TypedResults.BadRequest(new ApiResponse()
+                    { ProblemDetails = new() { Status = 400, Detail = "Scope of document must be valid" } });
+
+            
+            var data = db.Documents.Where(a => true);
+            if (filter.Code is not null)
+                data = data.Where(t => t.Code.Contains(filter.Code.Trim()));
+            if (filter.Title is not null)
+                data = data.Where(t => t.Title.Contains(filter.Title.Trim()));
+            if (filter.Edition is not null)
+                data = data.Where(t => t.Edition == filter.Edition);
+            if (filter.Pages is not null)
+                data = data.Where(t => t.Pages == filter.Pages);
+            if (filter.TypeId is not null)
+                data = data.Where(t => t.TypeId == filter.TypeId);
+            if (filter.ProcessId is not null)
+                data = data.Where(t => t.ProcessId == filter.ProcessId);
+            if (filter.ScopeId is not null)
+                data = data.Where(t => t.ScopeId == filter.ScopeId);
+            if(filter.DateOfValidity is not null)
+                switch (filter.DateComparator)
+                {
+                    case DateComparator.Equal:
+                        data = data.Where(t => t.DateOfValidity == filter.DateOfValidity);
+                        break;
+                    case DateComparator.Greater:
+                        data = data.Where(t => t.DateOfValidity > filter.DateOfValidity);
+                        break;
+                    case DateComparator.Less:
+                        data = data.Where(t => t.DateOfValidity < filter.DateOfValidity);
+                        break;
+                    case DateComparator.EqualGreater:
+                        data = data.Where(t => t.DateOfValidity >= filter.DateOfValidity);
+                        break;
+                    case DateComparator.EqualLess:
+                        data = data.Where(t => t.DateOfValidity <= filter.DateOfValidity);
+                        break;
+                }
+                
+
+            switch (filter.SortBy)
+            {
+                case SortByDocument.Code:
+                    data = filter.SortOrder == SortOrder.Asc
+                        ? data.OrderBy(t => t.Code)
+                        : data.OrderByDescending(t => t.Code);
+                    break;
+                case SortByDocument.Title:
+                    data = filter.SortOrder == SortOrder.Asc
+                        ? data.OrderBy(t => t.Title)
+                        : data.OrderByDescending(t => t.Title);
+                    break;
+                case SortByDocument.Edition:
+                    data = filter.SortOrder == SortOrder.Asc
+                        ? data.OrderBy(t => t.Edition)
+                        : data.OrderByDescending(t => t.Edition);
+                    break;
+                case SortByDocument.Id:
+                    data = filter.SortOrder == SortOrder.Asc
+                        ? data.OrderBy(t => t.Id)
+                        : data.OrderBy(t => t.Id);    
+                    break;
+                case SortByDocument.Pages:
+                    data = filter.SortOrder == SortOrder.Asc
+                        ? data.OrderBy(t => t.Pages)
+                        : data.OrderBy(t => t.Pages);    
+                    break;
+                case SortByDocument.DateOfValidity:
+                    data = filter.SortOrder == SortOrder.Asc
+                        ? data.OrderBy(t => t.DateOfValidity)
+                        : data.OrderBy(t => t.DateOfValidity);    
+                    break;
+            }
+
+            data = data
+                .Skip((filter.PaginationParams.PageNumber - 1) * filter.PaginationParams.PageSize)
+                .Take(filter.PaginationParams.PageSize);
+
+            return TypedResults.Ok(new ApiResponse<IEnumerable<Document>>
+            {
+                Data = await data.ToListAsync(cancellationToken: ct)
+            });
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
     }
 }
