@@ -23,10 +23,6 @@ public class FilterDocumentDtoValidator : AbstractValidator<FilterDocumentDto>
             .GreaterThan((short)0)
             .WithMessage("Pages must be greater than 0");
 
-        RuleFor(e => e.DateOfValidity)
-            .LessThanOrEqualTo(DateTimeOffset.UtcNow)
-            .WithMessage("Date of validity must be less or equal than today`s day");
-
         RuleFor(e => e.TypeId)
             .GreaterThan(0)
             .WithMessage("Type id must be greater than 0");
