@@ -76,6 +76,10 @@ public static class DocumentEndpoints
                 return TypedResults.BadRequest(new ApiResponse()
                     { ProblemDetails = new() { Status = 400, Detail = "Document Type must be valid" } });
             
+            if(await db.Documents.FirstOrDefaultAsync(a => a.Code+a.Edition == doc.Code+doc.Edition, cancellationToken: ct)is not null)
+                return TypedResults.BadRequest(new ApiResponse()
+                    { ProblemDetails = new() { Status = 400, Detail = "Code + Edition must be unique" } });
+                
             db.Documents.Add(doc.ToNewDocument());
             await db.SaveChangesAsync(ct);
 
