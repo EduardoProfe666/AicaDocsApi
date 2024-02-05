@@ -1,7 +1,7 @@
 using AicaDocsApi.Dto.Downloads;
 using FluentValidation;
 
-namespace AicaDocsApi.Validators.Download;
+namespace AicaDocsApi.Validators.Downloads;
 
 public class DownloadCreatedDtoValidator : AbstractValidator<DownloadCreatedDto>
 {
@@ -15,7 +15,7 @@ public class DownloadCreatedDtoValidator : AbstractValidator<DownloadCreatedDto>
         
         RuleFor(e => e.Username)
             .MaximumLength(64)
-            .WithMessage("Username must have a maximum length of 64 caracters")
+            .WithMessage("Username must have a maximum length of 64 characters")
             .NotEmpty()
             .WithMessage("Username must not be empty");
         

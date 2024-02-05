@@ -1,7 +1,7 @@
 using AicaDocsApi.Dto.Nomenclators;
 using FluentValidation;
 
-namespace AicaDocsApi.Validators.Nomenclator;
+namespace AicaDocsApi.Validators.Nomenclators;
 
 public class NomenclatorCreatedDtoValidator : AbstractValidator<NomenclatorCreatedDto>
 {
@@ -9,7 +9,7 @@ public class NomenclatorCreatedDtoValidator : AbstractValidator<NomenclatorCreat
     {
         RuleFor(e => e.Name)
             .MaximumLength(64)
-            .WithMessage("Name must have a maximum length of 64 caracters")
+            .WithMessage("Name must have a maximum length of 64 characters")
             .NotEmpty()
             .WithMessage("Name must not be empty");
         

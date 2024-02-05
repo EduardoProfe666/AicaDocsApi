@@ -5,6 +5,7 @@ using AicaDocsApi.Dto.Nomenclators.Filter;
 using AicaDocsApi.Models;
 using AicaDocsApi.Responses;
 using AicaDocsApi.Validators;
+using AicaDocsApi.Validators.Commons;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,7 +39,7 @@ public static class NomenclatorEndpoints
             .AddEndpointFilter<ValidationFilter<NomenclatorUpdateDto>>();
 
 
-        static async Task<Results<Ok<ApiResponse<IEnumerable<Nomenclator>>>, ValidationProblem>>
+        static async Task<Results<Ok<ApiResponse<IEnumerable<Nomenclator>>>, BadRequest<ApiResponse>>>
             FilterNomenclator(
                 FilterNomenclatorDto filter,
                 AicaDocsDb db, CancellationToken ct)
@@ -83,7 +84,14 @@ public static class NomenclatorEndpoints
             if (data is null)
                 return TypedResults.NotFound(new ApiResponse()
                 {
-                    ProblemDetails = new() { Status = 404, Detail = "Doesn't exist a nomenclator with the given Id" }
+                    ProblemDetails = new()
+                    {
+                        Status = 404,
+                        Errors = new Dictionary<string, string[]>
+                        {
+                            { "Nomenclator Id", ["Doesn't exist a nomenclator with the given Id"] }
+                        }
+                    }
                 });
             return TypedResults.Ok(new ApiResponse<Nomenclator>()
             {
@@ -91,15 +99,16 @@ public static class NomenclatorEndpoints
             });
         }
 
-        static async Task<Results<Created, ValidationProblem>> PostNomenclator(NomenclatorCreatedDto nomenclator,
+        static async Task<Results<Created, BadRequest<ApiResponse>>> PostNomenclator(NomenclatorCreatedDto nomenclator,
             AicaDocsDb db, CancellationToken ct)
         {
-            await db.Nomenclators.AddAsync(new Nomenclator() { Type = nomenclator.Type, Name = nomenclator.Name }, ct);
+            await db.Nomenclators.AddAsync(new Nomenclator() { Type = nomenclator.Type, Name = nomenclator.Name },
+                ct);
             await db.SaveChangesAsync(ct);
             return TypedResults.Created();
         }
 
-        static async Task<Results<Ok, NotFound<ApiResponse>, ValidationProblem>> PatchNomenclator(int id,
+        static async Task<Results<Ok, NotFound<ApiResponse>, BadRequest<ApiResponse>>> PatchNomenclator(int id,
             NomenclatorUpdateDto nomenclator,
             AicaDocsDb db, CancellationToken ct)
         {
@@ -110,7 +119,10 @@ public static class NomenclatorEndpoints
                     ProblemDetails = new()
                     {
                         Status = 404,
-                        Detail = "Doesn't exist a nomenclator with the given Id"
+                        Errors = new Dictionary<string, string[]>
+                        {
+                            { "Nomenclator Id", ["Doesn't exist a nomenclator with the given Id"] }
+                        }
                     }
                 });
 

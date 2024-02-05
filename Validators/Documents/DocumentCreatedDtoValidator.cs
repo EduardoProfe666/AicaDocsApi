@@ -1,7 +1,7 @@
 using AicaDocsApi.Dto.Documents;
 using FluentValidation;
 
-namespace AicaDocsApi.Validators.Document;
+namespace AicaDocsApi.Validators.Documents;
 
 public class DocumentCreatedDtoValidator : AbstractValidator<DocumentCreatedDto>
 {
@@ -9,25 +9,25 @@ public class DocumentCreatedDtoValidator : AbstractValidator<DocumentCreatedDto>
     {
         RuleFor(e => e.Title)
             .MaximumLength(64)
-            .WithMessage("Title must have a maximum length of 64 caracters")
+            .WithMessage("Title must have a maximum length of 64 characters")
             .NotEmpty()
             .WithMessage("Title must not be empty");
         
         RuleFor(e => e.Code)
             .MaximumLength(64)
-            .WithMessage("Code must have a maximum length of 64 caracters")
+            .WithMessage("Code must have a maximum length of 64 characters")
             .NotEmpty()
             .WithMessage("Code must not be empty");
 
         RuleFor(e => e.Edition)
-            .GreaterThan((short)0)
-            .WithMessage("Edition must be greater than 0")
+            .ExclusiveBetween(0,32001)
+            .WithMessage("Edition must be greater than 0 and less than 32001")
             .NotNull()
             .WithMessage("Edition cannot be null");
         
         RuleFor(e => e.Pages)
-            .GreaterThan((short)0)
-            .WithMessage("Pages must be greater than 0")
+            .ExclusiveBetween(0,32001)
+            .WithMessage("Pages must be greater than 0 and less than 32001")
             .NotNull()
             .WithMessage("Pages cannot be null");
 

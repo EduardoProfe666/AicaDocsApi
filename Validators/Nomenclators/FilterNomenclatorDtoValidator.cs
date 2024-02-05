@@ -1,7 +1,7 @@
 using AicaDocsApi.Dto.Nomenclators.Filter;
 using FluentValidation;
 
-namespace AicaDocsApi.Validators.Filter;
+namespace AicaDocsApi.Validators.Nomenclators;
 
 public class FilterNomenclatorDtoValidator: AbstractValidator<FilterNomenclatorDto>
 {
@@ -25,18 +25,16 @@ public class FilterNomenclatorDtoValidator: AbstractValidator<FilterNomenclatorD
         
         RuleFor(e => e.PaginationParams)
             .NotNull()
-            .WithMessage("Pagination Params cannot be null")
-            .NotNull()
             .WithMessage("Pagination Params cannot be null");
         
         RuleFor(e => e.PaginationParams.PageNumber)
-            .GreaterThan((short)0)
+            .GreaterThan(0)
             .WithMessage("Page Number of Pagination Params must be greater than 0")
             .NotNull()
             .WithMessage("Page Number of Pagination Params cannot be null");
         
         RuleFor(e => e.PaginationParams.PageSize)
-            .GreaterThan((short)0)
+            .GreaterThan(0)
             .WithMessage("Page Size of Pagination Params must be greater than 0")
             .NotNull()
             .WithMessage("Page Size of Pagination Params cannot be null");
