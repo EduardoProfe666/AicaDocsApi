@@ -32,8 +32,6 @@ public class DocumentCreatedDtoValidator : AbstractValidator<DocumentCreatedDto>
             .WithMessage("Pages cannot be null");
 
         RuleFor(e => e.DateOfValidity)
-            .LessThanOrEqualTo(DateTimeOffset.UtcNow)
-            .WithMessage("Date of validity must be less or equal than today`s day")
             .NotNull()
             .WithMessage("Date of validity cannot be null");
         
