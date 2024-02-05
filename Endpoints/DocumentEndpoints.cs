@@ -62,17 +62,18 @@ public static class DocumentEndpoints
 
         static async Task<Results<Created, BadRequest<ApiResponse>, ValidationProblem>> PostDocument(DocumentCreatedDto doc,
             AicaDocsDb db,
+            ValidateUtils vu,
             CancellationToken ct)
         {
-            if (!await ValidateUtils.ValidateNomenclatorId(doc.ProcessId, TypeOfNomenclator.ProcessOfDocument, db, ct))
+            if (!await vu.ValidateNomenclatorId(doc.ProcessId, TypeOfNomenclator.ProcessOfDocument, ct))
                 return TypedResults.BadRequest(new ApiResponse()
                     { ProblemDetails = new() { Status = 400, Detail = "Document Process must be valid" } });
             
-            if (!await ValidateUtils.ValidateNomenclatorId(doc.ScopeId, TypeOfNomenclator.ScopeOfDocument, db, ct))
+            if (!await vu.ValidateNomenclatorId(doc.ScopeId, TypeOfNomenclator.ScopeOfDocument, ct))
                 return TypedResults.BadRequest(new ApiResponse()
                     { ProblemDetails = new() { Status = 400, Detail = "Document Scope must be valid" } });
             
-            if (!await ValidateUtils.ValidateNomenclatorId(doc.TypeId, TypeOfNomenclator.TypeOfDocument, db, ct))
+            if (!await vu.ValidateNomenclatorId(doc.TypeId, TypeOfNomenclator.TypeOfDocument, ct))
                 return TypedResults.BadRequest(new ApiResponse()
                     { ProblemDetails = new() { Status = 400, Detail = "Document Type must be valid" } });
             
@@ -90,18 +91,19 @@ public static class DocumentEndpoints
         static async Task<Results<Ok<ApiResponse<IEnumerable<Document>>>, ValidationProblem, BadRequest<ApiResponse>>>
             FilterDocument(
                 FilterDocumentDto filter,
+                ValidateUtils vu,
                 AicaDocsDb db, CancellationToken ct)
         {
             
-            if (filter.TypeId is not null && !await ValidateUtils.ValidateNomenclatorId(filter.TypeId, TypeOfNomenclator.TypeOfDocument, db, ct))
+            if (filter.TypeId is not null && !await vu.ValidateNomenclatorId(filter.TypeId, TypeOfNomenclator.TypeOfDocument, ct))
                 return TypedResults.BadRequest(new ApiResponse()
                     { ProblemDetails = new() { Status = 400, Detail = "Type of document must be valid" } });
             
-            if (filter.ProcessId is not null && !await ValidateUtils.ValidateNomenclatorId(filter.ProcessId, TypeOfNomenclator.ProcessOfDocument, db, ct))
+            if (filter.ProcessId is not null && !await vu.ValidateNomenclatorId(filter.ProcessId, TypeOfNomenclator.ProcessOfDocument, ct))
                 return TypedResults.BadRequest(new ApiResponse()
                     { ProblemDetails = new() { Status = 400, Detail = "Process of document must be valid" } });
 
-            if (filter.ScopeId is not null && !await ValidateUtils.ValidateNomenclatorId(filter.ScopeId, TypeOfNomenclator.ScopeOfDocument, db, ct))
+            if (filter.ScopeId is not null && !await vu.ValidateNomenclatorId(filter.ScopeId, TypeOfNomenclator.ScopeOfDocument, ct))
                 return TypedResults.BadRequest(new ApiResponse()
                     { ProblemDetails = new() { Status = 400, Detail = "Scope of document must be valid" } });
 

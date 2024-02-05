@@ -58,10 +58,11 @@ public static class DownloadEndpoints
         static async Task<Results<Ok<ApiResponse<IEnumerable<Download>>>, ValidationProblem, BadRequest<ApiResponse>>>
             FilterDownload(
                 FilterDownloadDto filter,
+                ValidateUtils vu,
                 AicaDocsDb db, CancellationToken ct)
         {
             
-            if (filter.ReasonId is not null && !await ValidateUtils.ValidateNomenclatorId(filter.ReasonId, TypeOfNomenclator.ReasonOfDownload, db, ct))
+            if (filter.ReasonId is not null && !await vu.ValidateNomenclatorId(filter.ReasonId, TypeOfNomenclator.ReasonOfDownload, ct))
                 return TypedResults.BadRequest(new ApiResponse()
                     { ProblemDetails = new() { Status = 400, Detail = "Download reason must be valid" } });
             

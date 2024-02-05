@@ -1,5 +1,6 @@
 using AicaDocsApi.Database;
 using AicaDocsApi.Endpoints;
+using AicaDocsApi.Validators.Utils;
 using dotenv.net;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddEndpointsApiExplorer();
-
+builder.Services.AddScoped<ValidateUtils>();
 
 builder.Services.AddDbContext<AicaDocsDb>(x => x.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQLConnection")));
 // builder.Services.AddDbContext<AicaDocsDb>(x => x.UseSqlite("DataSource=db.dat"));
