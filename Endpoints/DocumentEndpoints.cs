@@ -1,14 +1,12 @@
 using AicaDocsApi.Database;
 using AicaDocsApi.Dto.Documents;
 using AicaDocsApi.Dto.Documents.Filter;
-using AicaDocsApi.Dto.Downloads.Filter;
 using AicaDocsApi.Dto.FilterCommons;
 using AicaDocsApi.Models;
 using AicaDocsApi.Responses;
-using AicaDocsApi.Validators;
+using AicaDocsApi.Validators.Commons;
 using AicaDocsApi.Validators.Utils;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace AicaDocsApi.Endpoints;
@@ -24,15 +22,15 @@ public static class DocumentEndpoints
         // ToDo: Quitar este endpoint en despliegue
         group.MapGet("", async (AicaDocsDb db, CancellationToken ct) => await db.Documents.ToListAsync(ct))
             .WithSummary("ONLY FOR TESTING. Get all documents");
-        
+
         group.MapPost("/filter", FilterDocument)
             .WithSummary("Get documents with specific filters, sorts and pagination")
             .AddEndpointFilter<ValidationFilter<FilterDocumentDto>>();
-            
+
 
         group.MapGet("/{id:int}", GetDocumentById)
             .WithSummary("Get the document with the given id");
-        
+
         group.MapPost("", PostDocument)
             .WithSummary("Create a new document")
             .AddEndpointFilter<ValidationFilter<DocumentCreatedDto>>();
@@ -47,9 +45,12 @@ public static class DocumentEndpoints
             {
                 return TypedResults.NotFound(new ApiResponse()
                 {
-                    ProblemDetails = new ProblemDetails()
+                    ProblemDetails = new()
                     {
-                        Status = 404, Detail = "Doesn`t exist a document with the given id"
+                        Status = 404, Errors = new Dictionary<string, string[]>
+                        {
+                            { "Document Id", ["Doesn`t exist a document with the given id"] }
+                        }
                     }
                 });
             }
@@ -60,54 +61,80 @@ public static class DocumentEndpoints
             });
         }
 
-        static async Task<Results<Created, BadRequest<ApiResponse>, ValidationProblem>> PostDocument(DocumentCreatedDto doc,
+        static async Task<Results<Created, BadRequest<ApiResponse>>> PostDocument(
+            DocumentCreatedDto doc,
             AicaDocsDb db,
             ValidateUtils vu,
             CancellationToken ct)
         {
-            if (!await vu.ValidateNomenclatorId(doc.ProcessId, TypeOfNomenclator.ProcessOfDocument, ct))
+            if (await db.Documents.FirstOrDefaultAsync(a => a.Code + a.Edition == doc.Code + doc.Edition,
+                    cancellationToken: ct) is not null)
                 return TypedResults.BadRequest(new ApiResponse()
-                    { ProblemDetails = new() { Status = 400, Detail = "Document Process must be valid" } });
+                    { ProblemDetails = new() { Status = 400, Errors = new Dictionary<string, string[]>
+                    {
+                        { "Code-Edition", ["Code+Edition must be unique"] }
+                    } } });
             
-            if (!await vu.ValidateNomenclatorId(doc.ScopeId, TypeOfNomenclator.ScopeOfDocument, ct))
-                return TypedResults.BadRequest(new ApiResponse()
-                    { ProblemDetails = new() { Status = 400, Detail = "Document Scope must be valid" } });
-            
+            var errorMessages = new List<string>();
             if (!await vu.ValidateNomenclatorId(doc.TypeId, TypeOfNomenclator.TypeOfDocument, ct))
-                return TypedResults.BadRequest(new ApiResponse()
-                    { ProblemDetails = new() { Status = 400, Detail = "Document Type must be valid" } });
+                errorMessages.Add("Type of document must be valid");
+
+            if (!await vu.ValidateNomenclatorId(doc.ProcessId, TypeOfNomenclator.ProcessOfDocument, ct))
+                errorMessages.Add("Process of document must be valid");
+
+            if (!await vu.ValidateNomenclatorId(doc.ScopeId, TypeOfNomenclator.ScopeOfDocument, ct))
+                errorMessages.Add("Scope of document must be valid");
             
-            if(await db.Documents.FirstOrDefaultAsync(a => a.Code+a.Edition == doc.Code+doc.Edition, cancellationToken: ct)is not null)
+            if (errorMessages.Count > 0)
                 return TypedResults.BadRequest(new ApiResponse()
-                    { ProblemDetails = new() { Status = 400, Detail = "Code + Edition must be unique" } });
-                
+                {
+                    ProblemDetails = new()
+                    {
+                        Status = 400, Errors = new Dictionary<string, string[]>
+                        {
+                            { "Nomenclators", errorMessages.ToArray() }
+                        }
+                    }
+                });
+            
             db.Documents.Add(doc.ToNewDocument());
             await db.SaveChangesAsync(ct);
 
             return TypedResults.Created();
         }
-        
-        
-        static async Task<Results<Ok<ApiResponse<IEnumerable<Document>>>, ValidationProblem, BadRequest<ApiResponse>>>
+
+
+        static async Task<Results<Ok<ApiResponse<IEnumerable<Document>>>, BadRequest<ApiResponse>>>
             FilterDocument(
                 FilterDocumentDto filter,
                 ValidateUtils vu,
                 AicaDocsDb db, CancellationToken ct)
         {
-            
-            if (filter.TypeId is not null && !await vu.ValidateNomenclatorId(filter.TypeId, TypeOfNomenclator.TypeOfDocument, ct))
-                return TypedResults.BadRequest(new ApiResponse()
-                    { ProblemDetails = new() { Status = 400, Detail = "Type of document must be valid" } });
-            
-            if (filter.ProcessId is not null && !await vu.ValidateNomenclatorId(filter.ProcessId, TypeOfNomenclator.ProcessOfDocument, ct))
-                return TypedResults.BadRequest(new ApiResponse()
-                    { ProblemDetails = new() { Status = 400, Detail = "Process of document must be valid" } });
+            var errorMessages = new List<string>();
+            if (filter.TypeId is not null &&
+                !await vu.ValidateNomenclatorId(filter.TypeId, TypeOfNomenclator.TypeOfDocument, ct))
+                errorMessages.Add("Type of document must be valid");
 
-            if (filter.ScopeId is not null && !await vu.ValidateNomenclatorId(filter.ScopeId, TypeOfNomenclator.ScopeOfDocument, ct))
-                return TypedResults.BadRequest(new ApiResponse()
-                    { ProblemDetails = new() { Status = 400, Detail = "Scope of document must be valid" } });
+            if (filter.ProcessId is not null &&
+                !await vu.ValidateNomenclatorId(filter.ProcessId, TypeOfNomenclator.ProcessOfDocument, ct))
+                errorMessages.Add("Process of document must be valid");
 
-            
+            if (filter.ScopeId is not null &&
+                !await vu.ValidateNomenclatorId(filter.ScopeId, TypeOfNomenclator.ScopeOfDocument, ct))
+                errorMessages.Add("Scope of document must be valid");
+
+            if (errorMessages.Count > 0)
+                return TypedResults.BadRequest(new ApiResponse()
+                {
+                    ProblemDetails = new()
+                    {
+                        Status = 400, Errors = new Dictionary<string, string[]>
+                        {
+                            { "Nomenclators", errorMessages.ToArray() }
+                        }
+                    }
+                });
+
             var data = db.Documents.Where(a => true);
             if (filter.Code is not null)
                 data = data.Where(t => t.Code.Contains(filter.Code.Trim()));
@@ -123,7 +150,7 @@ public static class DocumentEndpoints
                 data = data.Where(t => t.ProcessId == filter.ProcessId);
             if (filter.ScopeId is not null)
                 data = data.Where(t => t.ScopeId == filter.ScopeId);
-            if(filter.DateOfValidity is not null)
+            if (filter.DateOfValidity is not null)
                 switch (filter.DateComparator)
                 {
                     case DateComparator.Equal:
@@ -142,7 +169,7 @@ public static class DocumentEndpoints
                         data = data.Where(t => t.DateOfValidity <= filter.DateOfValidity);
                         break;
                 }
-                
+
 
             switch (filter.SortBy)
             {
@@ -164,17 +191,17 @@ public static class DocumentEndpoints
                 case SortByDocument.Id:
                     data = filter.SortOrder == SortOrder.Asc
                         ? data.OrderBy(t => t.Id)
-                        : data.OrderBy(t => t.Id);    
+                        : data.OrderBy(t => t.Id);
                     break;
                 case SortByDocument.Pages:
                     data = filter.SortOrder == SortOrder.Asc
                         ? data.OrderBy(t => t.Pages)
-                        : data.OrderBy(t => t.Pages);    
+                        : data.OrderBy(t => t.Pages);
                     break;
                 case SortByDocument.DateOfValidity:
                     data = filter.SortOrder == SortOrder.Asc
                         ? data.OrderBy(t => t.DateOfValidity)
-                        : data.OrderBy(t => t.DateOfValidity);    
+                        : data.OrderBy(t => t.DateOfValidity);
                     break;
             }
 
@@ -187,22 +214,5 @@ public static class DocumentEndpoints
                 Data = await data.ToListAsync(cancellationToken: ct)
             });
         }
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     }
 }

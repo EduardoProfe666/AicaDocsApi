@@ -3,20 +3,24 @@ using AicaDocsApi.Endpoints;
 using AicaDocsApi.Validators.Utils;
 using dotenv.net;
 using FluentValidation;
+using FluentValidation.AspNetCore;
+using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddFluentValidationRulesToSwagger();
 builder.Services.AddScoped<ValidateUtils>();
 
-builder.Services.AddDbContext<AicaDocsDb>(x => x.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQLConnection")));
+builder.Services.AddDbContext<AicaDocsDb>(x =>
+    x.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQLConnection")));
 // builder.Services.AddDbContext<AicaDocsDb>(x => x.UseSqlite("DataSource=db.dat"));
 // builder.Services.AddDbContext<AicaDocsDb>(opt => opt.UseInMemoryDatabase("AicaDocs"));
 
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1",

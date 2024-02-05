@@ -6,8 +6,8 @@ public class FilterDocumentDto
 {
     public required string? Code { get; set; }
     public required string? Title { get; set; }
-    public required short? Edition { get; set; }
-    public required short? Pages { get; set; }
+    public required int? Edition { get; set; }
+    public required int? Pages { get; set; }
     public required DateTimeOffset? DateOfValidity { get; set; }
     public required int? TypeId { get; set; }
     public required int? ProcessId { get; set; }

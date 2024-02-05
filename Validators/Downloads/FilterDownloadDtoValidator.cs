@@ -1,7 +1,7 @@
 using AicaDocsApi.Dto.Downloads.Filter;
 using FluentValidation;
 
-namespace AicaDocsApi.Validators.Download;
+namespace AicaDocsApi.Validators.Downloads;
 
 public class FilterDownloadDtoValidator : AbstractValidator<FilterDownloadDto>
 {
@@ -13,7 +13,7 @@ public class FilterDownloadDtoValidator : AbstractValidator<FilterDownloadDto>
 
         RuleFor(e => e.Username)
             .MaximumLength(64)
-            .WithMessage("Username must have a maximum length of 64 caracters");
+            .WithMessage("Username must have a maximum length of 64 characters");
 
         RuleFor(e => e.DocumentId)
             .GreaterThan(0)
@@ -42,18 +42,16 @@ public class FilterDownloadDtoValidator : AbstractValidator<FilterDownloadDto>
         
         RuleFor(e => e.PaginationParams)
             .NotNull()
-            .WithMessage("Pagination Params cannot be null")
-            .NotNull()
             .WithMessage("Pagination Params cannot be null");
         
         RuleFor(e => e.PaginationParams.PageNumber)
-            .GreaterThan((short)0)
+            .GreaterThan(0)
             .WithMessage("Page Number of Pagination Params must be greater than 0")
             .NotNull()
             .WithMessage("Page Number of Pagination Params cannot be null");
         
         RuleFor(e => e.PaginationParams.PageSize)
-            .GreaterThan((short)0)
+            .GreaterThan(0)
             .WithMessage("Page Size of Pagination Params must be greater than 0")
             .NotNull()
             .WithMessage("Page Size of Pagination Params cannot be null");

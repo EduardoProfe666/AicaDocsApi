@@ -1,7 +1,7 @@
 using AicaDocsApi.Dto.Documents.Filter;
 using FluentValidation;
 
-namespace AicaDocsApi.Validators.Document;
+namespace AicaDocsApi.Validators.Documents;
 
 public class FilterDocumentDtoValidator : AbstractValidator<FilterDocumentDto>
 {
@@ -9,19 +9,19 @@ public class FilterDocumentDtoValidator : AbstractValidator<FilterDocumentDto>
     {
         RuleFor(e => e.Title)
             .MaximumLength(64)
-            .WithMessage("Title must have a maximum length of 64 caracters");
+            .WithMessage("Title must have a maximum length of 64 characters");
 
         RuleFor(e => e.Code)
             .MaximumLength(64)
-            .WithMessage("Code must have a maximum length of 64 caracters");
+            .WithMessage("Code must have a maximum length of 64 characters");
 
         RuleFor(e => e.Edition)
-            .GreaterThan((short)0)
-            .WithMessage("Edition must be greater than 0");
+            .ExclusiveBetween(0,32001)
+            .WithMessage("Edition must be greater than 0 and less than 32001");
 
         RuleFor(e => e.Pages)
-            .GreaterThan((short)0)
-            .WithMessage("Pages must be greater than 0");
+            .ExclusiveBetween(0,32001)
+            .WithMessage("Pages must be greater than 0 and less than 32001");
 
         RuleFor(e => e.TypeId)
             .GreaterThan(0)
@@ -47,21 +47,19 @@ public class FilterDocumentDtoValidator : AbstractValidator<FilterDocumentDto>
             .WithMessage("SortOrder of download must be valid")
             .NotNull()
             .WithMessage("SortOrder cannot be null");
-        
+
         RuleFor(e => e.PaginationParams)
-            .NotNull()
-            .WithMessage("Pagination Params cannot be null")
             .NotNull()
             .WithMessage("Pagination Params cannot be null");
         
         RuleFor(e => e.PaginationParams.PageNumber)
-            .GreaterThan((short)0)
+            .GreaterThan(0)
             .WithMessage("Page Number of Pagination Params must be greater than 0")
             .NotNull()
             .WithMessage("Page Number of Pagination Params cannot be null");
         
         RuleFor(e => e.PaginationParams.PageSize)
-            .GreaterThan((short)0)
+            .GreaterThan(0)
             .WithMessage("Page Size of Pagination Params must be greater than 0")
             .NotNull()
             .WithMessage("Page Size of Pagination Params cannot be null");
