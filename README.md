@@ -72,7 +72,7 @@ Asegúrese que tiene las `Migrations`, si no ejecute antes el comando: `dotnet e
 <table>
     <tbody>
         <tr>
-            <td align="center" valign="top" width="70%"><a href="https://github.com/pedrydev"><img src="https://avatars.githubusercontent.com/u/54073823?v=3?s=100" width="100px;" alt="Pedro Velázquez Borrero"/><br /><sub><b>Pedro Velázquez Borrero</b></sub></a><br/> </td>
+            <td align="center" valign="top" width="70%"><a href="https://github.com/pedrydev"><img src="https://avatars.githubusercontent.com/u/54073823?v=3?s=100" width="100px;" alt="Ing. Pedro Velázquez Borrero"/><br /><sub><b>Ing. Pedro Velázquez Borrero</b></sub></a><br/> </td>
         </tr>
     </tbody>
 </table>
