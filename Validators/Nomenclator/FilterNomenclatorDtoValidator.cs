@@ -1,7 +1,7 @@
 using AicaDocsApi.Dto.Nomenclators.Filter;
 using FluentValidation;
 
-namespace AicaDocsApi.Validators.Filter;
+namespace AicaDocsApi.Validators.Nomenclator;
 
 public class FilterNomenclatorDtoValidator: AbstractValidator<FilterNomenclatorDto>
 {

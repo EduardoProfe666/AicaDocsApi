@@ -1,41 +1,33 @@
-using AicaDocsApi.Dto.Documents.Filter;
+using AicaDocsApi.Dto.Downloads.Filter;
 using FluentValidation;
 
-namespace AicaDocsApi.Validators.Filter;
+namespace AicaDocsApi.Validators.Download;
 
-public class FilterDocumentDtoValidator : AbstractValidator<FilterDocumentDto>
+public class FilterDownloadDtoValidator : AbstractValidator<FilterDownloadDto>
 {
-    public FilterDocumentDtoValidator()
+    public FilterDownloadDtoValidator()
     {
-        RuleFor(e => e.Title)
+        RuleFor(e => e.Format)
+            .IsInEnum()
+            .WithMessage("Format must be valid");
+
+        RuleFor(e => e.Username)
             .MaximumLength(64)
-            .WithMessage("Title must have a maximum length of 64 caracters");
+            .WithMessage("Username must have a maximum length of 64 caracters");
 
-        RuleFor(e => e.Code)
-            .MaximumLength(64)
-            .WithMessage("Code must have a maximum length of 64 caracters");
-
-        RuleFor(e => e.Edition)
-            .GreaterThan((short)0)
-            .WithMessage("Edition must be greater than 0");
-
-        RuleFor(e => e.Pages)
-            .GreaterThan((short)0)
-            .WithMessage("Pages must be greater than 0");
-
-        RuleFor(e => e.TypeId)
+        RuleFor(e => e.DocumentId)
             .GreaterThan(0)
-            .WithMessage("Type id must be greater than 0");
-
-        RuleFor(e => e.ProcessId)
+            .WithMessage("Document id must be greater than 0");
+        
+        RuleFor(e => e.ReasonId)
             .GreaterThan(0)
-            .WithMessage("Process id must be greater than 0");
+            .WithMessage("Reason id must be greater than 0");
 
-        RuleFor(e => e.ScopeId)
-            .GreaterThan(0)
-            .WithMessage("Scope id must be greater than 0");
-          
-          
+        RuleFor(e => e.DateDownload)
+            .LessThanOrEqualTo(DateTimeOffset.UtcNow)
+            .WithMessage("Date of download must be less or equal than today`s day");
+
+        
         RuleFor(e => e.SortBy)
             .IsInEnum()
             .WithMessage("SortBy of download must be valid")
@@ -65,6 +57,9 @@ public class FilterDocumentDtoValidator : AbstractValidator<FilterDocumentDto>
             .WithMessage("Page Size of Pagination Params must be greater than 0")
             .NotNull()
             .WithMessage("Page Size of Pagination Params cannot be null");
-
+        
+        
+        
+        
     }
 }
