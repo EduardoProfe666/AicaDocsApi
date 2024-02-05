@@ -15,6 +15,8 @@ public class NomenclatorCreatedDtoValidator : AbstractValidator<NomenclatorCreat
         
         RuleFor(e => e.Type)
             .IsInEnum()
-            .WithMessage("Type must be valid");
+            .WithMessage("Type must be valid")
+            .NotNull()
+            .WithMessage("Type cannot be null");
     }
 }

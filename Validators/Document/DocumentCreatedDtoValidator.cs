@@ -36,7 +36,24 @@ public class DocumentCreatedDtoValidator : AbstractValidator<DocumentCreatedDto>
             .WithMessage("Date of validity must be less or equal than today`s day")
             .NotNull()
             .WithMessage("Date of validity cannot be null");
-
+        
+        RuleFor(e => e.TypeId)
+            .GreaterThan(0)
+            .WithMessage("Type id must be greater than 0")
+            .NotNull()
+            .WithMessage("Type id cannot be null");
+        
+        RuleFor(e => e.ProcessId)
+            .GreaterThan(0)
+            .WithMessage("Process id must be greater than 0")
+            .NotNull()
+            .WithMessage("Process id cannot be null");
+        
+        RuleFor(e => e.ScopeId)
+            .GreaterThan(0)
+            .WithMessage("Scope id must be greater than 0")
+            .NotNull()
+            .WithMessage("Scope id cannot be null");
 
 
 
