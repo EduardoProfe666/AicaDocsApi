@@ -4,11 +4,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AicaDocsApi.Validators.Utils;
 
-public static class ValidateUtils
+public class ValidateUtils
 {
-    public static async Task<bool> ValidateNomenclatorId(int? id, TypeOfNomenclator type, AicaDocsDb db, CancellationToken ct)
+    private readonly AicaDocsDb _db;
+
+    public ValidateUtils(AicaDocsDb db)
     {
-        var nomenclator = await db.Nomenclators.FirstOrDefaultAsync(n => n.Id == id, cancellationToken: ct);
+        _db = db;
+    }
+
+    public async Task<bool> ValidateNomenclatorId(int? id, TypeOfNomenclator type, CancellationToken ct)
+    {
+        var nomenclator = await _db.Nomenclators.FirstOrDefaultAsync(n => n.Id == id, cancellationToken: ct);
         return nomenclator is not null && nomenclator.Type == type;
 
     }

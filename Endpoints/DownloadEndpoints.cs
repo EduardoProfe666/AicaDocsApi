@@ -1,13 +1,11 @@
 using AicaDocsApi.Database;
 using AicaDocsApi.Dto.Downloads.Filter;
 using AicaDocsApi.Dto.FilterCommons;
-using AicaDocsApi.Dto.Nomenclators.Filter;
 using AicaDocsApi.Models;
 using AicaDocsApi.Responses;
-using AicaDocsApi.Validators;
+using AicaDocsApi.Validators.Commons;
 using AicaDocsApi.Validators.Utils;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace AicaDocsApi.Endpoints;
@@ -19,7 +17,7 @@ public static class DownloadEndpoints
         var group = app.MapGroup("/download")
             .WithOpenApi()
             .WithTags(["Downloads"]);
-        
+
         // ToDo: Quitar este endpoint en despliegue
         group.MapGet("", async (AicaDocsDb db, CancellationToken ct) => await db.Downloads.ToListAsync(ct))
             .WithSummary("ONLY FOR TESTING. Get all downloads");
@@ -27,11 +25,11 @@ public static class DownloadEndpoints
         group.MapPost("/filter", FilterDownload)
             .WithSummary("Get downloads with specific filters, sorts and pagination")
             .AddEndpointFilter<ValidationFilter<FilterDownloadDto>>();
-        
+
         group.MapGet("/{id:int}", GetDownloadById)
             .WithSummary("Get the download with the given id");
-        
-        
+
+
         static async Task<Results<Ok<ApiResponse<Download>>, NotFound<ApiResponse>>> GetDownloadById(int id,
             AicaDocsDb db,
             CancellationToken ct)
@@ -42,9 +40,12 @@ public static class DownloadEndpoints
             {
                 return TypedResults.NotFound(new ApiResponse()
                 {
-                    ProblemDetails = new ProblemDetails()
+                    ProblemDetails = new()
                     {
-                        Status = 404, Detail = "Doesn`t exist a download with the given id"
+                        Status = 404, Errors = new Dictionary<string, string[]>
+                        {
+                            { "Download Id", ["Doesn`t exist a download with the given id"] }
+                        }
                     }
                 });
             }
@@ -54,17 +55,27 @@ public static class DownloadEndpoints
                 Data = dl
             });
         }
-        
-        static async Task<Results<Ok<ApiResponse<IEnumerable<Download>>>, ValidationProblem, BadRequest<ApiResponse>>>
+
+        static async Task<Results<Ok<ApiResponse<IEnumerable<Download>>>, BadRequest<ApiResponse>>>
             FilterDownload(
                 FilterDownloadDto filter,
+                ValidateUtils vu,
                 AicaDocsDb db, CancellationToken ct)
         {
-            
-            if (filter.ReasonId is not null && !await ValidateUtils.ValidateNomenclatorId(filter.ReasonId, TypeOfNomenclator.ReasonOfDownload, db, ct))
+            if (filter.ReasonId is not null &&
+                !await vu.ValidateNomenclatorId(filter.ReasonId, TypeOfNomenclator.ReasonOfDownload, ct))
                 return TypedResults.BadRequest(new ApiResponse()
-                    { ProblemDetails = new() { Status = 400, Detail = "Download reason must be valid" } });
-            
+                {
+                    ProblemDetails = new()
+                    {
+                        Status = 400,
+                        Errors = new Dictionary<string, string[]>
+                        {
+                            { "ReasonId", ["Download reason must be valid"] }
+                        }
+                    }
+                });
+
             var data = db.Downloads.Where(a => true);
             if (filter.Format is not null)
                 data = data.Where(t => t.Format == filter.Format);
@@ -74,7 +85,7 @@ public static class DownloadEndpoints
                 data = data.Where(t => t.DocumentId == filter.DocumentId);
             if (filter.ReasonId is not null)
                 data = data.Where(t => t.ReasonId == filter.ReasonId);
-            if(filter.DateDownload is not null)
+            if (filter.DateDownload is not null)
                 switch (filter.DateComparator)
                 {
                     case DateComparator.Equal:
@@ -93,7 +104,7 @@ public static class DownloadEndpoints
                         data = data.Where(t => t.DateOfDownload <= filter.DateDownload);
                         break;
                 }
-                
+
 
             switch (filter.SortBy)
             {
@@ -115,7 +126,7 @@ public static class DownloadEndpoints
                 case SortByDownload.Format:
                     data = filter.SortOrder == SortOrder.Asc
                         ? data.OrderBy(t => t.Format)
-                        : data.OrderBy(t => t.Format);    
+                        : data.OrderBy(t => t.Format);
                     break;
             }
 
@@ -128,21 +139,5 @@ public static class DownloadEndpoints
                 Data = await data.ToListAsync(cancellationToken: ct)
             });
         }
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     }
 }
