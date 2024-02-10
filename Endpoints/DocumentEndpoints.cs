@@ -4,10 +4,15 @@ using AicaDocsApi.Dto.Documents.Filter;
 using AicaDocsApi.Dto.FilterCommons;
 using AicaDocsApi.Models;
 using AicaDocsApi.Responses;
+using AicaDocsApi.Utils;
 using AicaDocsApi.Validators.Commons;
 using AicaDocsApi.Validators.Utils;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Minio;
+using Minio.DataModel.Args;
+using SautinSoft;
 
 namespace AicaDocsApi.Endpoints;
 
@@ -33,7 +38,8 @@ public static class DocumentEndpoints
 
         group.MapPost("", PostDocument)
             .WithSummary("Create a new document")
-            .AddEndpointFilter<ValidationFilter<DocumentCreatedDto>>();
+            .AddEndpointFilter<ValidationFilter<DocumentCreatedDto>>()
+            .DisableAntiforgery();
 
         static async Task<Results<Ok<ApiResponse<Document>>, NotFound<ApiResponse>>> GetDocumentById(int id,
             AicaDocsDb db,
@@ -62,19 +68,26 @@ public static class DocumentEndpoints
         }
 
         static async Task<Results<Created, BadRequest<ApiResponse>>> PostDocument(
-            DocumentCreatedDto doc,
+            [FromForm] DocumentCreatedDto doc,
             AicaDocsDb db,
             ValidateUtils vu,
+            BucketNameProvider bucketNameProvider,
+            IMinioClient minioClient,
             CancellationToken ct)
         {
             if (await db.Documents.FirstOrDefaultAsync(a => a.Code + a.Edition == doc.Code + doc.Edition,
                     cancellationToken: ct) is not null)
                 return TypedResults.BadRequest(new ApiResponse()
-                    { ProblemDetails = new() { Status = 400, Errors = new Dictionary<string, string[]>
+                {
+                    ProblemDetails = new()
                     {
-                        { "Code-Edition", ["Code+Edition must be unique"] }
-                    } } });
-            
+                        Status = 400, Errors = new Dictionary<string, string[]>
+                        {
+                            { "Code-Edition", ["Code+Edition must be unique"] }
+                        }
+                    }
+                });
+
             var errorMessages = new List<string>();
             if (!await vu.ValidateNomenclatorId(doc.TypeId, TypeOfNomenclator.TypeOfDocument, ct))
                 errorMessages.Add("Type of document must be valid");
@@ -84,7 +97,7 @@ public static class DocumentEndpoints
 
             if (!await vu.ValidateNomenclatorId(doc.ScopeId, TypeOfNomenclator.ScopeOfDocument, ct))
                 errorMessages.Add("Scope of document must be valid");
-            
+
             if (errorMessages.Count > 0)
                 return TypedResults.BadRequest(new ApiResponse()
                 {
@@ -96,6 +109,34 @@ public static class DocumentEndpoints
                         }
                     }
                 });
+
+            var fileName = doc.Code + doc.Edition;
+
+            // Pdf
+            await using var fileStreamPdf = doc.Pdf.OpenReadStream();
+            var poaPdf = new PutObjectArgs()
+                .WithBucket(bucketNameProvider.BucketName)
+                .WithObject($"/pdf/{fileName}.pdf")
+                .WithStreamData(fileStreamPdf)
+                .WithObjectSize(fileStreamPdf.Length)
+                .WithContentType("application/pdf");
+            await minioClient.PutObjectAsync(poaPdf, ct);
+
+
+            // Word
+            await using var pdfStream = doc.Pdf.OpenReadStream();
+            var pdfFocus = new PdfFocus();
+            pdfFocus.OpenPdf(pdfStream);
+            
+            await using var fileStreamWord = new MemoryStream(pdfFocus.ToWord());
+            var poaWord = new PutObjectArgs()
+                .WithBucket(bucketNameProvider.BucketName)
+                .WithObject($"/word/{fileName}.docx")
+                .WithStreamData(fileStreamWord)
+                .WithObjectSize(fileStreamWord.Length)
+                .WithContentType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+            await minioClient.PutObjectAsync(poaWord, ct);
+            pdfFocus.ClosePdf();
             
             db.Documents.Add(doc.ToNewDocument());
             await db.SaveChangesAsync(ct);

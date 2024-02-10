@@ -1,12 +1,16 @@
 using AicaDocsApi.Database;
+using AicaDocsApi.Dto.Downloads;
 using AicaDocsApi.Dto.Downloads.Filter;
 using AicaDocsApi.Dto.FilterCommons;
 using AicaDocsApi.Models;
 using AicaDocsApi.Responses;
+using AicaDocsApi.Utils;
 using AicaDocsApi.Validators.Commons;
 using AicaDocsApi.Validators.Utils;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using Minio;
+using Minio.DataModel.Args;
 
 namespace AicaDocsApi.Endpoints;
 
@@ -29,6 +33,65 @@ public static class DownloadEndpoints
         group.MapGet("/{id:int}", GetDownloadById)
             .WithSummary("Get the download with the given id");
 
+        group.MapPost("", PostDownloadDocument)
+            .WithSummary("Download a document in the specified format")
+            .AddEndpointFilter<ValidationFilter<DownloadCreatedDto>>();
+
+        static async Task<Results<Ok<ApiResponse<string>>, NotFound<ApiResponse>>> PostDownloadDocument(
+            DownloadCreatedDto dto,
+            BucketNameProvider bucketNameProvider, IMinioClient minioClient, AicaDocsDb db, CancellationToken ct)
+        {
+            var doc = await db.Documents.FirstOrDefaultAsync(e => e.Id == dto.DocumentId, cancellationToken: ct);
+
+            if (doc is null)
+            {
+                return TypedResults.NotFound(new ApiResponse()
+                {
+                    ProblemDetails = new()
+                    {
+                        Status = 404, Errors = new Dictionary<string, string[]>
+                        {
+                            { "Document Id", ["Doesn`t exist a document with the given id"] }
+                        }
+                    }
+                });
+            }
+            
+            var format = dto.Format == Format.Pdf ? "pdf" : "word";
+            var ext = dto.Format == Format.Pdf ? "pdf" : "docx";
+
+            try
+            {
+                var argsLo = new StatObjectArgs()
+                    .WithBucket(bucketNameProvider.BucketName)
+                    .WithObject($"/{format}/{doc.Code + doc.Edition}.{ext}");
+                await minioClient.StatObjectAsync(argsLo, ct);
+            }
+            catch
+            {
+                return TypedResults.NotFound(new ApiResponse
+                {
+                    ProblemDetails = new()
+                    {
+                        Status = 404, Errors = new Dictionary<string, string[]>
+                        {
+                            { "Document Existance", [$"Doesn`t exist a file document with the given specifications."] }
+                        }
+                    }
+                });
+            }
+
+            var args = new PresignedGetObjectArgs()
+                .WithBucket(bucketNameProvider.BucketName)
+                .WithObject($"/{format}/{doc.Code + doc.Edition}.{ext}")
+                .WithExpiry(60 * 5);
+            var url = await minioClient.PresignedGetObjectAsync(args);
+
+            db.Downloads.Add(dto.ToDownload());
+            await db.SaveChangesAsync(ct);
+
+            return TypedResults.Ok(new ApiResponse<string> { Data = url });
+        }
 
         static async Task<Results<Ok<ApiResponse<Download>>, NotFound<ApiResponse>>> GetDownloadById(int id,
             AicaDocsDb db,
