@@ -33,7 +33,7 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1",
         new OpenApiInfo
         {
-            Title = "Aica Docs Api", Version = "0.7",
+            Title = "Aica Docs Api", Version = "0.9",
             Contact = new()
             {
                 Name = "Lilian Rosa Rojas Rodríguez | Eduardo Alejandro González Martell",
