@@ -7,10 +7,10 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["AicaDocsApi/AicaDocsApi.csproj", "AicaDocsApi/"]
-RUN dotnet restore "AicaDocsApi/AicaDocsApi.csproj"
+COPY ["AicaDocsApi.csproj", "./"]
+RUN dotnet restore "AicaDocsApi.csproj"
 COPY . .
-WORKDIR "/src/AicaDocsApi"
+WORKDIR "/src/"
 RUN dotnet build "AicaDocsApi.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish

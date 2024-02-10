@@ -8,4 +8,15 @@ public class DownloadCreatedDto
     public required string Username { get; set; }
     public required int DocumentId { get; set; }
     public required int ReasonId { get; set; }
+
+    public Download ToDownload()
+    {
+        return new Download
+        {
+          Format  = Format,
+          Username = Username,
+          DocumentId = DocumentId,
+          ReasonId = ReasonId
+        };
+    }
 }
