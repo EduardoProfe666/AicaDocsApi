@@ -14,6 +14,8 @@ de Gestión de Calidad de la Empresa Laboratorios Farmacéuticos de AICA+.
 Se creó una minimal API en Asp.Net Core 8 cumpliendo con todos los requisitos 
 capturados.
 
+Se creó una base de datos en `PostgreSql` robusta con dichos requisitos, y para
+el almacenamiento de los reficheros se empleó [MinIO](https://min.io/)
 
 ## 📖 Problemática
 
@@ -50,6 +52,28 @@ correspondiente en cada caso:
 ```
 3. Si no tiene la base de datos de Aica, en la consola escriba el siguiente comando: `dotnet ef database update`.
 Asegúrese que tiene las `Migrations`, si no ejecute antes el comando: `dotnet ef migrations add InitialCreate`
+
+## 📶 Configuración de la conexión a MinIO
+> [!IMPORTANT]
+> Se debe tener instalado `MinIO Server` y tener configurado el usuario necesario 
+> con permiso de escritura-lectura y el `bucket` en el cual se almacenarán los datos
+> con la estructura de carpetas `/pdf` y `/word`
+
+Para poder configurar la conexión a MinIO siga los siguientes pasos:
+1. Cree/Actualice en la ruta raíz del proyecto un archivo `appsettings.json`
+2. En dicho archivo coloque las siguientes líneas, sustituyendo `INFO` por la información
+   correspondiente en cada caso:
+``` json
+}
+    (...),
+    "Minio": {
+       "endpoint": "INFO",
+       "accessKey": "INFO",
+       "secretKey": "INFO",
+       "bucket": "INFO"
+    }
+}
+```
 
 ## 🚀 Despliegue
 > [!NOTE]  

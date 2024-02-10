@@ -12,6 +12,9 @@ public class DocumentCreatedDto
     public required int ProcessId { get; set; }
     public required int ScopeId { get; set; }
 
+    public required IFormFile Pdf { get; set; }
+    public required IFormFile Word { get; set; }
+
     public Models.Document ToNewDocument()
     {
         return new Models.Document
