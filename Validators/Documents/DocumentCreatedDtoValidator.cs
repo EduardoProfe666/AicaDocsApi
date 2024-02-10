@@ -25,12 +25,6 @@ public class DocumentCreatedDtoValidator : AbstractValidator<DocumentCreatedDto>
             .NotNull()
             .WithMessage("Edition cannot be null");
 
-        RuleFor(e => e.Pages)
-            .ExclusiveBetween(0, 32001)
-            .WithMessage("Pages must be greater than 0 and less than 32001")
-            .NotNull()
-            .WithMessage("Pages cannot be null");
-
         RuleFor(e => e.DateOfValidity)
             .NotNull()
             .WithMessage("Date of validity cannot be null");
@@ -62,15 +56,6 @@ public class DocumentCreatedDtoValidator : AbstractValidator<DocumentCreatedDto>
         RuleFor(e => e.Pdf.Length)
             .LessThanOrEqualTo(20 * 1024 * 1024)
             .WithMessage("File length must not exceed 20 MB");
-
-        RuleFor(e => e.Word)
-            .NotEmpty()
-            .WithMessage("Word file cannot be null")
-            .Must(e => e.ContentType is "application/vnd.openxmlformats-officedocument.wordprocessingml.document" or "application/msword")
-            .WithMessage("Only word files allowed (*.docx)");
-
-        RuleFor(e => e.Word.Length)
-            .LessThanOrEqualTo(20 * 1024 * 1024)
-            .WithMessage("File length must not exceed 20 MB");
+        
     }
 }

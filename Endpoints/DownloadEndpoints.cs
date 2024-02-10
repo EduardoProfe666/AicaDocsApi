@@ -1,4 +1,3 @@
-using System.Reactive.Linq;
 using AicaDocsApi.Database;
 using AicaDocsApi.Dto.Downloads;
 using AicaDocsApi.Dto.Downloads.Filter;
@@ -61,35 +60,14 @@ public static class DownloadEndpoints
             var format = dto.Format == Format.Pdf ? "pdf" : "word";
             var ext = dto.Format == Format.Pdf ? "pdf" : "docx";
 
-            var valid = true;
             try
             {
-                var argsLo = new ListObjectsArgs()
+                var argsLo = new StatObjectArgs()
                     .WithBucket(bucketNameProvider.BucketName)
-                    .WithPrefix($"{doc.Code + doc.Edition}.{ext}");
-                await minioClient.ListObjectsAsync(argsLo, ct);
+                    .WithObject($"/{format}/{doc.Code + doc.Edition}.{ext}");
+                await minioClient.StatObjectAsync(argsLo, ct);
             }
             catch
-            {
-                valid = format != "pdf";
-                if (!valid)
-                {
-                    ext = "doc";
-                    try
-                    {
-                        var argsLo = new ListObjectsArgs()
-                            .WithBucket(bucketNameProvider.BucketName)
-                            .WithPrefix($"{doc.Code + doc.Edition}.{ext}");
-                        await minioClient.ListObjectsAsync(argsLo, ct);
-                    }
-                    catch
-                    {
-                        valid = false;
-                    }
-                }
-            }
-
-            if (!valid)
             {
                 return TypedResults.NotFound(new ApiResponse
                 {
@@ -97,7 +75,7 @@ public static class DownloadEndpoints
                     {
                         Status = 404, Errors = new Dictionary<string, string[]>
                         {
-                            { "Document Existance", ["Doesn`t exist a file document with the given specifications."] }
+                            { "Document Existance", [$"Doesn`t exist a file document with the given specifications."] }
                         }
                     }
                 });

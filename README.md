@@ -75,6 +75,20 @@ Para poder configurar la conexión a MinIO siga los siguientes pasos:
 }
 ```
 
+Otra posible forma de probar la api es usando el servidor de prueba en la nube de MinIO,
+usando los siguientes datos en el archivo `appsettings.json`:
+``` json
+}
+    (...),
+    "Minio": {
+       "endpoint": "https://play.min.io:9443/",
+       "accessKey": "testuser",
+       "secretKey": "testuser",
+       "bucket": "aica-docs"
+    }
+}
+```
+
 ## 🚀 Despliegue
 > [!NOTE]  
 > No se han desplegado aún la api ni la base de datos.

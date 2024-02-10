@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Minio;
 using Minio.DataModel.Args;
+using SautinSoft;
 
 namespace AicaDocsApi.Endpoints;
 
@@ -110,9 +111,6 @@ public static class DocumentEndpoints
                 });
 
             var fileName = doc.Code + doc.Edition;
-            var docx = doc.Word.ContentType ==
-                       "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-            var extension = docx ? "docx" : "doc";
 
             // Pdf
             await using var fileStreamPdf = doc.Pdf.OpenReadStream();
@@ -126,17 +124,20 @@ public static class DocumentEndpoints
 
 
             // Word
-            await using var fileStreamWord = doc.Word.OpenReadStream();
+            await using var pdfStream = doc.Pdf.OpenReadStream();
+            var pdfFocus = new PdfFocus();
+            pdfFocus.OpenPdf(pdfStream);
+            
+            await using var fileStreamWord = new MemoryStream(pdfFocus.ToWord());
             var poaWord = new PutObjectArgs()
                 .WithBucket(bucketNameProvider.BucketName)
-                .WithObject($"/word/{fileName}.{extension}")
+                .WithObject($"/word/{fileName}.docx")
                 .WithStreamData(fileStreamWord)
                 .WithObjectSize(fileStreamWord.Length)
-                .WithContentType(docx
-                    ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    : "application/msword");
+                .WithContentType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
             await minioClient.PutObjectAsync(poaWord, ct);
-
+            pdfFocus.ClosePdf();
+            
             db.Documents.Add(doc.ToNewDocument());
             await db.SaveChangesAsync(ct);
 
