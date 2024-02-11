@@ -4,8 +4,9 @@
 ![.Net](https://img.shields.io/badge/.NET-5C2D91?style=for-the-badge&logo=.net&logoColor=white)
 ![Swagger](https://img.shields.io/badge/-Swagger-%23Clojure?style=for-the-badge&logo=swagger&logoColor=white)
 ![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
-![Render](https://img.shields.io/badge/Render-%46E3B7.svg?style=for-the-badge&logo=render&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+![Render](https://img.shields.io/badge/Render-%46E3B7.svg?style=for-the-badge&logo=render&logoColor=white)
+![Railway](https://img.shields.io/badge/Railway-131415?style=for-the-badge&logo=railway&logoColor=white)
 
 Proyecto de Práctica I de Ingeniería Informática.
 
@@ -16,7 +17,7 @@ Se creó una minimal API en Asp.Net Core 8 cumpliendo con todos los requisitos
 capturados.
 
 Se creó una base de datos en `PostgreSql` robusta con dichos requisitos, y para
-el almacenamiento de los reficheros se empleó [MinIO](https://min.io/)
+el almacenamiento de los ficheros se empleó [MinIO](https://min.io/)
 
 ## 📖 Problemática
 
@@ -97,9 +98,9 @@ usando los siguientes datos en el archivo `appsettings.json`:
 > no es para el uso extensivo de la misma.
 
 Se realizó un despliegue de prueba de los 3 servicios básicos de la API:
-- Despliegue del servidor Asp.Net en [Render](https://aica-docs.onrender.com)
+- Despliegue del servidor Asp.Net en [Render](https://aica-docs.onrender.com/)
 - Despliegue de la base de datos en [ElephantSQL](https://api.elephantsql.com/)
-- Despliegue del servidor de MinIO en [play.min.io](https://play.min.io:9443/)
+- Despliegue del servidor de MinIO en [Railway](https://railway.app/)
 
 ## 👥 Autores
 <table>
