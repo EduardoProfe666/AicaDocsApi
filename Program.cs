@@ -22,7 +22,7 @@ var minioInfo = builder.Configuration.GetSection("Minio");
 builder.Services.AddMinio(configureClient => configureClient
     .WithEndpoint(minioInfo["endpoint"])
     .WithCredentials(minioInfo["accessKey"], minioInfo["secretKey"])
-    .WithSSL(false));
+    .WithSSL(true));
 builder.Services.AddSingleton(new BucketNameProvider(minioInfo["bucket"]!));
 
 
