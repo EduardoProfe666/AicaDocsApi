@@ -4,7 +4,8 @@
 ![.Net](https://img.shields.io/badge/.NET-5C2D91?style=for-the-badge&logo=.net&logoColor=white)
 ![Swagger](https://img.shields.io/badge/-Swagger-%23Clojure?style=for-the-badge&logo=swagger&logoColor=white)
 ![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
-
+![Render](https://img.shields.io/badge/Render-%46E3B7.svg?style=for-the-badge&logo=render&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 
 Proyecto de Práctica I de Ingeniería Informática.
 
@@ -90,8 +91,15 @@ usando los siguientes datos en el archivo `appsettings.json`:
 ```
 
 ## 🚀 Despliegue
-> [!NOTE]  
-> No se han desplegado aún la api ni la base de datos.
+
+> [!NOTE]
+> Estos despliegues son solamente para probar la Api en entornos de despliegue,
+> no es para el uso extensivo de la misma.
+
+Se realizó un despliegue de prueba de los 3 servicios básicos de la API:
+- Despliegue del servidor Asp.Net en [Render](https://aica-docs.onrender.com)
+- Despliegue de la base de datos en [ElephantSQL](https://api.elephantsql.com/)
+- Despliegue del servidor de MinIO en [play.min.io](https://play.min.io:9443/)
 
 ## 👥 Autores
 <table>
