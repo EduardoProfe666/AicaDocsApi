@@ -81,7 +81,7 @@ usando los siguientes datos en el archivo `appsettings.json`:
 }
     (...),
     "Minio": {
-       "endpoint": "https://play.min.io:9443/",
+       "endpoint": "play.min.io",
        "accessKey": "testuser",
        "secretKey": "testuser",
        "bucket": "aica-docs"
