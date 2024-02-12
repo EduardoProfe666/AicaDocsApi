@@ -37,10 +37,22 @@ public static class DownloadEndpoints
             .WithSummary("Download a document in the specified format")
             .AddEndpointFilter<ValidationFilter<DownloadCreatedDto>>();
 
-        static async Task<Results<Ok<ApiResponse<string>>, NotFound<ApiResponse>>> PostDownloadDocument(
-            DownloadCreatedDto dto,
+        static async Task<Results<Ok<ApiResponse<string>>, NotFound<ApiResponse>, BadRequest<ApiResponse>>> PostDownloadDocument(
+            DownloadCreatedDto dto, ValidateUtils vu,
             BucketNameProvider bucketNameProvider, IMinioClient minioClient, AicaDocsDb db, CancellationToken ct)
         {
+            if (!await vu.ValidateNomenclatorId(dto.ReasonId, TypeOfNomenclator.ReasonOfDownload, ct))
+                return TypedResults.BadRequest(new ApiResponse()
+                {
+                    ProblemDetails = new()
+                    {
+                        Status = 400, Errors = new Dictionary<string, string[]>
+                        {
+                            { "ReasonId", ["Reason Id must be valid"] }
+                        }
+                    }
+                });
+            
             var doc = await db.Documents.FirstOrDefaultAsync(e => e.Id == dto.DocumentId, cancellationToken: ct);
 
             if (doc is null)
