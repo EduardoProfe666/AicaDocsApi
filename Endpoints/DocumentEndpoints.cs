@@ -123,7 +123,20 @@ public static class DocumentEndpoints
             await minioClient.PutObjectAsync(poaPdf, ct);
 
 
-
+            // Word
+            await using var pdfStream = doc.Pdf.OpenReadStream();
+            var pdfFocus = new PdfFocus();
+            pdfFocus.OpenPdf(pdfStream);
+            
+            await using var fileStreamWord = new MemoryStream(pdfFocus.ToWord());
+            var poaWord = new PutObjectArgs()
+                .WithBucket(bucketNameProvider.BucketName)
+                .WithObject($"/word/{fileName}.docx")
+                .WithStreamData(fileStreamWord)
+                .WithObjectSize(fileStreamWord.Length)
+                .WithContentType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+            await minioClient.PutObjectAsync(poaWord, ct);
+            pdfFocus.ClosePdf();
             
             db.Documents.Add(doc.ToNewDocument());
             await db.SaveChangesAsync(ct);
