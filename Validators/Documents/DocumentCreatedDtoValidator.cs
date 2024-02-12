@@ -57,5 +57,15 @@ public class DocumentCreatedDtoValidator : AbstractValidator<DocumentCreatedDto>
             .LessThanOrEqualTo(20 * 1024 * 1024)
             .WithMessage("File length must not exceed 20 MB");
         
+        RuleFor(e => e.Word)
+            .NotEmpty()
+            .WithMessage("Word file cannot be null")
+            .Must(e => e.ContentType == "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+            .WithMessage("Only word files allowed (*.docx)");
+
+        RuleFor(e => e.Word.Length)
+            .LessThanOrEqualTo(20 * 1024 * 1024)
+            .WithMessage("File length must not exceed 20 MB");
+        
     }
 }
