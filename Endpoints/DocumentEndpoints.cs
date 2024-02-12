@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Minio;
 using Minio.DataModel.Args;
-using SautinSoft;
+using Spire.Pdf;
 
 namespace AicaDocsApi.Endpoints;
 
@@ -125,10 +125,12 @@ public static class DocumentEndpoints
 
             // Word
             await using var pdfStream = doc.Pdf.OpenReadStream();
-            var pdfFocus = new PdfFocus();
-            pdfFocus.OpenPdf(pdfStream);
+            var pdf = new PdfDocument();
+            pdf.LoadFromStream(pdfStream);
             
-            await using var fileStreamWord = new MemoryStream(pdfFocus.ToWord());
+            await using var fileStreamWord = new MemoryStream();
+            pdf.SaveToStream(fileStreamWord, FileFormat.DOCX);
+            fileStreamWord.Position = 0;
             var poaWord = new PutObjectArgs()
                 .WithBucket(bucketNameProvider.BucketName)
                 .WithObject($"/word/{fileName}.docx")
@@ -136,7 +138,6 @@ public static class DocumentEndpoints
                 .WithObjectSize(fileStreamWord.Length)
                 .WithContentType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
             await minioClient.PutObjectAsync(poaWord, ct);
-            pdfFocus.ClosePdf();
             
             db.Documents.Add(doc.ToNewDocument());
             await db.SaveChangesAsync(ct);
