@@ -54,7 +54,7 @@ public static class DownloadEndpoints
                     }
                 });
             
-            var doc = await db.Documents.FirstOrDefaultAsync(e => e.Id == dto.DocumentId, cancellationToken: ct);
+            var doc = await db.Documents.AsNoTracking().FirstOrDefaultAsync(e => e.Id == dto.DocumentId, cancellationToken: ct);
 
             if (doc is null)
             {
@@ -110,7 +110,7 @@ public static class DownloadEndpoints
             AicaDocsDb db,
             CancellationToken ct)
         {
-            var dl = await db.Downloads.FirstOrDefaultAsync(e => e.Id == id, cancellationToken: ct);
+            var dl = await db.Downloads.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id, cancellationToken: ct);
 
             if (dl is null)
             {
@@ -138,6 +138,7 @@ public static class DownloadEndpoints
                 ValidateUtils vu,
                 AicaDocsDb db, CancellationToken ct)
         {
+            // Prev Validations
             var validation = filter.ReasonId is not null &&
                              !await vu.ValidateNomenclatorId(filter.ReasonId, TypeOfNomenclator.ReasonOfDownload, ct);
             if (validation)
@@ -152,8 +153,9 @@ public static class DownloadEndpoints
                         }
                     }
                 });
-
-            var data = db.Downloads.Where(a => true);
+            
+            // Filter
+            var data = db.Downloads.AsNoTracking();
             if (filter.Format is not null)
                 data = data.Where(t => t.Format == filter.Format);
             if (filter.Username is not null)
@@ -182,7 +184,7 @@ public static class DownloadEndpoints
                         break;
                 }
 
-
+            // Sort
             switch (filter.SortBy)
             {
                 case SortByDownload.Id:
@@ -206,7 +208,8 @@ public static class DownloadEndpoints
                         : data.OrderBy(t => t.Format);
                     break;
             }
-
+            
+            // Pagination
             data = data
                 .Skip((filter.PaginationParams.PageNumber - 1) * filter.PaginationParams.PageSize)
                 .Take(filter.PaginationParams.PageSize);

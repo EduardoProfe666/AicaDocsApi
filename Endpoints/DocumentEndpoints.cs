@@ -45,7 +45,7 @@ public static class DocumentEndpoints
             AicaDocsDb db,
             CancellationToken ct)
         {
-            var doc = await db.Documents.FirstOrDefaultAsync(e => e.Id == id, cancellationToken: ct);
+            var doc = await db.Documents.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id, cancellationToken: ct);
 
             if (doc is null)
             {
@@ -75,7 +75,7 @@ public static class DocumentEndpoints
             IMinioClient minioClient,
             CancellationToken ct)
         {
-            var validation = await db.Documents.FirstOrDefaultAsync(a => a.Code + a.Edition == doc.Code + doc.Edition,
+            var validation = await db.Documents.AsNoTracking().FirstOrDefaultAsync(a => a.Code + a.Edition == doc.Code + doc.Edition,
                     cancellationToken: ct) is not null;
             if (validation)
                 return TypedResults.BadRequest(new ApiResponse()
@@ -150,6 +150,7 @@ public static class DocumentEndpoints
                 ValidateUtils vu,
                 AicaDocsDb db, CancellationToken ct)
         {
+            // Prev Validations
             var errorMessages = new List<string>();
             var validation = filter.TypeId is not null &&
                              !await vu.ValidateNomenclatorId(filter.TypeId, TypeOfNomenclator.TypeOfDocument, ct);
@@ -177,8 +178,9 @@ public static class DocumentEndpoints
                         }
                     }
                 });
-
-            var data = db.Documents.Where(a => true);
+            
+            // Filter
+            var data = db.Documents.AsNoTracking();
             if (filter.Code is not null)
                 data = data.Where(t => t.Code.Contains(filter.Code.Trim()));
             if (filter.Title is not null)
@@ -213,7 +215,7 @@ public static class DocumentEndpoints
                         break;
                 }
 
-
+            // Sort 
             switch (filter.SortBy)
             {
                 case SortByDocument.Code:
@@ -247,7 +249,8 @@ public static class DocumentEndpoints
                         : data.OrderBy(t => t.DateOfValidity);
                     break;
             }
-
+            
+            // Pagination
             data = data
                 .Skip((filter.PaginationParams.PageNumber - 1) * filter.PaginationParams.PageSize)
                 .Take(filter.PaginationParams.PageSize);
