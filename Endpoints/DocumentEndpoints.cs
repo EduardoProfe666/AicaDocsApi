@@ -129,6 +129,7 @@ public static class DocumentEndpoints
             pdfFocus.OpenPdf(pdfStream);
             
             await using var fileStreamWord = new MemoryStream(pdfFocus.ToWord());
+            fileStreamWord.Position = 0;
             var poaWord = new PutObjectArgs()
                 .WithBucket(bucketNameProvider.BucketName)
                 .WithObject($"/word/{fileName}.docx")
