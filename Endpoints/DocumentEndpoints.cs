@@ -5,6 +5,7 @@ using AicaDocsApi.Dto.FilterCommons;
 using AicaDocsApi.Models;
 using AicaDocsApi.Responses;
 using AicaDocsApi.Utils;
+using AicaDocsApi.Utils.BlobServices;
 using AicaDocsApi.Validators.Commons;
 using AicaDocsApi.Validators.Utils;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -71,12 +72,12 @@ public static class DocumentEndpoints
             [FromForm] DocumentCreatedDto doc,
             AicaDocsDb db,
             ValidateUtils vu,
-            BucketNameProvider bucketNameProvider,
-            IMinioClient minioClient,
+            IBlobService bs,
             CancellationToken ct)
         {
-            var validation = await db.Documents.AsNoTracking().FirstOrDefaultAsync(a => a.Code + a.Edition == doc.Code + doc.Edition,
-                    cancellationToken: ct) is not null;
+            var validation = await db.Documents.AsNoTracking().FirstOrDefaultAsync(
+                a => a.Code + a.Edition == doc.Code + doc.Edition,
+                cancellationToken: ct) is not null;
             if (validation)
                 return TypedResults.BadRequest(new ApiResponse()
                 {
@@ -116,27 +117,10 @@ public static class DocumentEndpoints
 
             var fileName = doc.Code + doc.Edition;
 
-            // Pdf
-            await using var fileStreamPdf = doc.Pdf.OpenReadStream();
-            var poaPdf = new PutObjectArgs()
-                .WithBucket(bucketNameProvider.BucketName)
-                .WithObject($"/pdf/{fileName}.pdf")
-                .WithStreamData(fileStreamPdf)
-                .WithObjectSize(fileStreamPdf.Length)
-                .WithContentType("application/pdf");
-            await minioClient.PutObjectAsync(poaPdf, ct);
 
+            await bs.UploadObject(doc.Pdf, fileName, ct);
+            await bs.UploadObject(doc.Word, fileName, ct);
 
-            // Word
-            await using var fileStreamWord = doc.Word.OpenReadStream();
-            var poaWord = new PutObjectArgs()
-                .WithBucket(bucketNameProvider.BucketName)
-                .WithObject($"/word/{fileName}.docx")
-                .WithStreamData(fileStreamWord)
-                .WithObjectSize(fileStreamWord.Length)
-                .WithContentType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
-            await minioClient.PutObjectAsync(poaPdf, ct);
-            
             db.Documents.Add(doc.ToNewDocument());
             await db.SaveChangesAsync(ct);
 
@@ -178,7 +162,7 @@ public static class DocumentEndpoints
                         }
                     }
                 });
-            
+
             // Filter
             var data = db.Documents.AsNoTracking();
             if (filter.Code is not null)
@@ -249,7 +233,7 @@ public static class DocumentEndpoints
                         : data.OrderBy(t => t.DateOfValidity);
                     break;
             }
-            
+
             // Pagination
             data = data
                 .Skip((filter.PaginationParams.PageNumber - 1) * filter.PaginationParams.PageSize)
