@@ -41,7 +41,8 @@ public static class DownloadEndpoints
             DownloadCreatedDto dto, ValidateUtils vu,
             BucketNameProvider bucketNameProvider, IMinioClient minioClient, AicaDocsDb db, CancellationToken ct)
         {
-            if (!await vu.ValidateNomenclatorId(dto.ReasonId, TypeOfNomenclator.ReasonOfDownload, ct))
+            var validation = !await vu.ValidateNomenclatorId(dto.ReasonId, TypeOfNomenclator.ReasonOfDownload, ct);
+            if (validation)
                 return TypedResults.BadRequest(new ApiResponse()
                 {
                     ProblemDetails = new()
@@ -137,8 +138,9 @@ public static class DownloadEndpoints
                 ValidateUtils vu,
                 AicaDocsDb db, CancellationToken ct)
         {
-            if (filter.ReasonId is not null &&
-                !await vu.ValidateNomenclatorId(filter.ReasonId, TypeOfNomenclator.ReasonOfDownload, ct))
+            var validation = filter.ReasonId is not null &&
+                             !await vu.ValidateNomenclatorId(filter.ReasonId, TypeOfNomenclator.ReasonOfDownload, ct);
+            if (validation)
                 return TypedResults.BadRequest(new ApiResponse()
                 {
                     ProblemDetails = new()

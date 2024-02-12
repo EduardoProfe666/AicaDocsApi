@@ -75,8 +75,9 @@ public static class DocumentEndpoints
             IMinioClient minioClient,
             CancellationToken ct)
         {
-            if (await db.Documents.FirstOrDefaultAsync(a => a.Code + a.Edition == doc.Code + doc.Edition,
-                    cancellationToken: ct) is not null)
+            var validation = await db.Documents.FirstOrDefaultAsync(a => a.Code + a.Edition == doc.Code + doc.Edition,
+                    cancellationToken: ct) is not null;
+            if (validation)
                 return TypedResults.BadRequest(new ApiResponse()
                 {
                     ProblemDetails = new()
@@ -89,13 +90,16 @@ public static class DocumentEndpoints
                 });
 
             var errorMessages = new List<string>();
-            if (!await vu.ValidateNomenclatorId(doc.TypeId, TypeOfNomenclator.TypeOfDocument, ct))
+            validation = !await vu.ValidateNomenclatorId(doc.TypeId, TypeOfNomenclator.TypeOfDocument, ct);
+            if (validation)
                 errorMessages.Add("Type of document must be valid");
 
-            if (!await vu.ValidateNomenclatorId(doc.ProcessId, TypeOfNomenclator.ProcessOfDocument, ct))
+            validation = !await vu.ValidateNomenclatorId(doc.ProcessId, TypeOfNomenclator.ProcessOfDocument, ct);
+            if (validation)
                 errorMessages.Add("Process of document must be valid");
 
-            if (!await vu.ValidateNomenclatorId(doc.ScopeId, TypeOfNomenclator.ScopeOfDocument, ct))
+            validation = !await vu.ValidateNomenclatorId(doc.ScopeId, TypeOfNomenclator.ScopeOfDocument, ct);
+            if (validation)
                 errorMessages.Add("Scope of document must be valid");
 
             if (errorMessages.Count > 0)
@@ -147,16 +151,19 @@ public static class DocumentEndpoints
                 AicaDocsDb db, CancellationToken ct)
         {
             var errorMessages = new List<string>();
-            if (filter.TypeId is not null &&
-                !await vu.ValidateNomenclatorId(filter.TypeId, TypeOfNomenclator.TypeOfDocument, ct))
+            var validation = filter.TypeId is not null &&
+                             !await vu.ValidateNomenclatorId(filter.TypeId, TypeOfNomenclator.TypeOfDocument, ct);
+            if (validation)
                 errorMessages.Add("Type of document must be valid");
 
-            if (filter.ProcessId is not null &&
-                !await vu.ValidateNomenclatorId(filter.ProcessId, TypeOfNomenclator.ProcessOfDocument, ct))
+            validation = filter.ProcessId is not null &&
+                         !await vu.ValidateNomenclatorId(filter.ProcessId, TypeOfNomenclator.ProcessOfDocument, ct);
+            if (validation)
                 errorMessages.Add("Process of document must be valid");
 
-            if (filter.ScopeId is not null &&
-                !await vu.ValidateNomenclatorId(filter.ScopeId, TypeOfNomenclator.ScopeOfDocument, ct))
+            validation = filter.ScopeId is not null &&
+                         !await vu.ValidateNomenclatorId(filter.ScopeId, TypeOfNomenclator.ScopeOfDocument, ct);
+            if (validation)
                 errorMessages.Add("Scope of document must be valid");
 
             if (errorMessages.Count > 0)
