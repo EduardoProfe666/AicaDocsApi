@@ -1,6 +1,7 @@
 using AicaDocsApi.Database;
 using AicaDocsApi.Endpoints;
-using AicaDocsApi.Utils;
+using AicaDocsApi.Utils.BlobServices;
+using AicaDocsApi.Utils.BlobServices.Minio;
 using AicaDocsApi.Validators.Utils;
 using FluentValidation;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
@@ -10,22 +11,22 @@ using Minio;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Validations Services
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddFluentValidationRulesToSwagger();
 builder.Services.AddScoped<ValidateUtils>();
 
+// Db Services
 builder.Services.AddDbContext<AicaDocsDb>(x =>
     x.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQLConnection")));
 // builder.Services.AddDbContext<AicaDocsDb>(opt => opt.UseInMemoryDatabase("AicaDocs"));
 
-var minioInfo = builder.Configuration.GetSection("Minio");
-builder.Services.AddMinio(configureClient => configureClient
-    .WithEndpoint(minioInfo["endpoint"])
-    .WithCredentials(minioInfo["accessKey"], minioInfo["secretKey"])
-    .WithSSL(false));
-builder.Services.AddSingleton(new BucketNameProvider(minioInfo["bucket"]!));
+// Blob Services
+builder.Services.Configure<MinioOptions>(builder.Configuration.GetSection("Minio"));
+builder.Services.AddScoped<IBlobService, MinioBlobService>();
 
 
+// General Configuration Services
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -33,7 +34,7 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1",
         new OpenApiInfo
         {
-            Title = "Aica Docs Api", Version = "0.9",
+            Title = "Aica Docs Api", Version = "1.0.1",
             Contact = new()
             {
                 Name = "Lilian Rosa Rojas Rodríguez | Eduardo Alejandro González Martell",
@@ -52,11 +53,10 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-
 app.UseSwagger();
 app.UseSwaggerUI();
-
 app.UseHttpsRedirection();
+
 app.MapGeneralEndpoints();
 app.MapDocumentEndpoints();
 app.MapDownloadEndpoints();

@@ -4,15 +4,12 @@ using AicaDocsApi.Dto.Documents.Filter;
 using AicaDocsApi.Dto.FilterCommons;
 using AicaDocsApi.Models;
 using AicaDocsApi.Responses;
-using AicaDocsApi.Utils;
+using AicaDocsApi.Utils.BlobServices;
 using AicaDocsApi.Validators.Commons;
 using AicaDocsApi.Validators.Utils;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Minio;
-using Minio.DataModel.Args;
-using SautinSoft;
 
 namespace AicaDocsApi.Endpoints;
 
@@ -45,7 +42,7 @@ public static class DocumentEndpoints
             AicaDocsDb db,
             CancellationToken ct)
         {
-            var doc = await db.Documents.FirstOrDefaultAsync(e => e.Id == id, cancellationToken: ct);
+            var doc = await db.Documents.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id, cancellationToken: ct);
 
             if (doc is null)
             {
@@ -71,12 +68,13 @@ public static class DocumentEndpoints
             [FromForm] DocumentCreatedDto doc,
             AicaDocsDb db,
             ValidateUtils vu,
-            BucketNameProvider bucketNameProvider,
-            IMinioClient minioClient,
+            IBlobService bs,
             CancellationToken ct)
         {
-            if (await db.Documents.FirstOrDefaultAsync(a => a.Code + a.Edition == doc.Code + doc.Edition,
-                    cancellationToken: ct) is not null)
+            var validation = await db.Documents.AsNoTracking().FirstOrDefaultAsync(
+                a => a.Code + a.Edition == doc.Code + doc.Edition,
+                cancellationToken: ct) is not null;
+            if (validation)
                 return TypedResults.BadRequest(new ApiResponse()
                 {
                     ProblemDetails = new()
@@ -89,13 +87,16 @@ public static class DocumentEndpoints
                 });
 
             var errorMessages = new List<string>();
-            if (!await vu.ValidateNomenclatorId(doc.TypeId, TypeOfNomenclator.TypeOfDocument, ct))
+            validation = !await vu.ValidateNomenclatorId(doc.TypeId, TypeOfNomenclator.TypeOfDocument, ct);
+            if (validation)
                 errorMessages.Add("Type of document must be valid");
 
-            if (!await vu.ValidateNomenclatorId(doc.ProcessId, TypeOfNomenclator.ProcessOfDocument, ct))
+            validation = !await vu.ValidateNomenclatorId(doc.ProcessId, TypeOfNomenclator.ProcessOfDocument, ct);
+            if (validation)
                 errorMessages.Add("Process of document must be valid");
 
-            if (!await vu.ValidateNomenclatorId(doc.ScopeId, TypeOfNomenclator.ScopeOfDocument, ct))
+            validation = !await vu.ValidateNomenclatorId(doc.ScopeId, TypeOfNomenclator.ScopeOfDocument, ct);
+            if (validation)
                 errorMessages.Add("Scope of document must be valid");
 
             if (errorMessages.Count > 0)
@@ -112,32 +113,10 @@ public static class DocumentEndpoints
 
             var fileName = doc.Code + doc.Edition;
 
-            // Pdf
-            await using var fileStreamPdf = doc.Pdf.OpenReadStream();
-            var poaPdf = new PutObjectArgs()
-                .WithBucket(bucketNameProvider.BucketName)
-                .WithObject($"/pdf/{fileName}.pdf")
-                .WithStreamData(fileStreamPdf)
-                .WithObjectSize(fileStreamPdf.Length)
-                .WithContentType("application/pdf");
-            await minioClient.PutObjectAsync(poaPdf, ct);
 
+            await bs.UploadObject(doc.Pdf, fileName, ct);
+            await bs.UploadObject(doc.Word, fileName, ct);
 
-            // Word
-            await using var pdfStream = doc.Pdf.OpenReadStream();
-            var pdfFocus = new PdfFocus();
-            pdfFocus.OpenPdf(pdfStream);
-            
-            await using var fileStreamWord = new MemoryStream(pdfFocus.ToWord());
-            var poaWord = new PutObjectArgs()
-                .WithBucket(bucketNameProvider.BucketName)
-                .WithObject($"/word/{fileName}.docx")
-                .WithStreamData(fileStreamWord)
-                .WithObjectSize(fileStreamWord.Length)
-                .WithContentType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
-            await minioClient.PutObjectAsync(poaWord, ct);
-            pdfFocus.ClosePdf();
-            
             db.Documents.Add(doc.ToNewDocument());
             await db.SaveChangesAsync(ct);
 
@@ -151,17 +130,21 @@ public static class DocumentEndpoints
                 ValidateUtils vu,
                 AicaDocsDb db, CancellationToken ct)
         {
+            // Prev Validations
             var errorMessages = new List<string>();
-            if (filter.TypeId is not null &&
-                !await vu.ValidateNomenclatorId(filter.TypeId, TypeOfNomenclator.TypeOfDocument, ct))
+            var validation = filter.TypeId is not null &&
+                             !await vu.ValidateNomenclatorId(filter.TypeId, TypeOfNomenclator.TypeOfDocument, ct);
+            if (validation)
                 errorMessages.Add("Type of document must be valid");
 
-            if (filter.ProcessId is not null &&
-                !await vu.ValidateNomenclatorId(filter.ProcessId, TypeOfNomenclator.ProcessOfDocument, ct))
+            validation = filter.ProcessId is not null &&
+                         !await vu.ValidateNomenclatorId(filter.ProcessId, TypeOfNomenclator.ProcessOfDocument, ct);
+            if (validation)
                 errorMessages.Add("Process of document must be valid");
 
-            if (filter.ScopeId is not null &&
-                !await vu.ValidateNomenclatorId(filter.ScopeId, TypeOfNomenclator.ScopeOfDocument, ct))
+            validation = filter.ScopeId is not null &&
+                         !await vu.ValidateNomenclatorId(filter.ScopeId, TypeOfNomenclator.ScopeOfDocument, ct);
+            if (validation)
                 errorMessages.Add("Scope of document must be valid");
 
             if (errorMessages.Count > 0)
@@ -176,7 +159,8 @@ public static class DocumentEndpoints
                     }
                 });
 
-            var data = db.Documents.Where(a => true);
+            // Filter
+            var data = db.Documents.AsNoTracking();
             if (filter.Code is not null)
                 data = data.Where(t => t.Code.Contains(filter.Code.Trim()));
             if (filter.Title is not null)
@@ -211,7 +195,7 @@ public static class DocumentEndpoints
                         break;
                 }
 
-
+            // Sort 
             switch (filter.SortBy)
             {
                 case SortByDocument.Code:
@@ -246,6 +230,7 @@ public static class DocumentEndpoints
                     break;
             }
 
+            // Pagination
             data = data
                 .Skip((filter.PaginationParams.PageNumber - 1) * filter.PaginationParams.PageSize)
                 .Take(filter.PaginationParams.PageSize);

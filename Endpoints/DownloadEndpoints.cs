@@ -4,13 +4,11 @@ using AicaDocsApi.Dto.Downloads.Filter;
 using AicaDocsApi.Dto.FilterCommons;
 using AicaDocsApi.Models;
 using AicaDocsApi.Responses;
-using AicaDocsApi.Utils;
+using AicaDocsApi.Utils.BlobServices;
 using AicaDocsApi.Validators.Commons;
 using AicaDocsApi.Validators.Utils;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
-using Minio;
-using Minio.DataModel.Args;
 
 namespace AicaDocsApi.Endpoints;
 
@@ -37,11 +35,13 @@ public static class DownloadEndpoints
             .WithSummary("Download a document in the specified format")
             .AddEndpointFilter<ValidationFilter<DownloadCreatedDto>>();
 
-        static async Task<Results<Ok<ApiResponse<string>>, NotFound<ApiResponse>, BadRequest<ApiResponse>>> PostDownloadDocument(
-            DownloadCreatedDto dto, ValidateUtils vu,
-            BucketNameProvider bucketNameProvider, IMinioClient minioClient, AicaDocsDb db, CancellationToken ct)
+        static async Task<Results<Ok<ApiResponse<string>>, NotFound<ApiResponse>, BadRequest<ApiResponse>>>
+            PostDownloadDocument(
+                DownloadCreatedDto dto, ValidateUtils vu,
+                IBlobService bs, AicaDocsDb db, CancellationToken ct)
         {
-            if (!await vu.ValidateNomenclatorId(dto.ReasonId, TypeOfNomenclator.ReasonOfDownload, ct))
+            var validation = !await vu.ValidateNomenclatorId(dto.ReasonId, TypeOfNomenclator.ReasonOfDownload, ct);
+            if (validation)
                 return TypedResults.BadRequest(new ApiResponse()
                 {
                     ProblemDetails = new()
@@ -52,8 +52,9 @@ public static class DownloadEndpoints
                         }
                     }
                 });
-            
-            var doc = await db.Documents.FirstOrDefaultAsync(e => e.Id == dto.DocumentId, cancellationToken: ct);
+
+            var doc = await db.Documents.AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == dto.DocumentId, cancellationToken: ct);
 
             if (doc is null)
             {
@@ -68,19 +69,12 @@ public static class DownloadEndpoints
                     }
                 });
             }
-            
+
             var format = dto.Format == Format.Pdf ? "pdf" : "word";
             var ext = dto.Format == Format.Pdf ? "pdf" : "docx";
 
-            try
-            {
-                var argsLo = new StatObjectArgs()
-                    .WithBucket(bucketNameProvider.BucketName)
-                    .WithObject($"/{format}/{doc.Code + doc.Edition}.{ext}");
-                await minioClient.StatObjectAsync(argsLo, ct);
-            }
-            catch
-            {
+            var exists = await bs.ValidateExistanceObject($"/{format}/{doc.Code + doc.Edition}.{ext}", ct);
+            if (!exists)
                 return TypedResults.NotFound(new ApiResponse
                 {
                     ProblemDetails = new()
@@ -91,13 +85,8 @@ public static class DownloadEndpoints
                         }
                     }
                 });
-            }
-
-            var args = new PresignedGetObjectArgs()
-                .WithBucket(bucketNameProvider.BucketName)
-                .WithObject($"/{format}/{doc.Code + doc.Edition}.{ext}")
-                .WithExpiry(60 * 5);
-            var url = await minioClient.PresignedGetObjectAsync(args);
+            
+            var url = await bs.PresignedGetUrl($"/{format}/{doc.Code + doc.Edition}.{ext}", ct);
 
             db.Downloads.Add(dto.ToDownload());
             await db.SaveChangesAsync(ct);
@@ -109,7 +98,7 @@ public static class DownloadEndpoints
             AicaDocsDb db,
             CancellationToken ct)
         {
-            var dl = await db.Downloads.FirstOrDefaultAsync(e => e.Id == id, cancellationToken: ct);
+            var dl = await db.Downloads.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id, cancellationToken: ct);
 
             if (dl is null)
             {
@@ -137,8 +126,10 @@ public static class DownloadEndpoints
                 ValidateUtils vu,
                 AicaDocsDb db, CancellationToken ct)
         {
-            if (filter.ReasonId is not null &&
-                !await vu.ValidateNomenclatorId(filter.ReasonId, TypeOfNomenclator.ReasonOfDownload, ct))
+            // Prev Validations
+            var validation = filter.ReasonId is not null &&
+                             !await vu.ValidateNomenclatorId(filter.ReasonId, TypeOfNomenclator.ReasonOfDownload, ct);
+            if (validation)
                 return TypedResults.BadRequest(new ApiResponse()
                 {
                     ProblemDetails = new()
@@ -151,7 +142,8 @@ public static class DownloadEndpoints
                     }
                 });
 
-            var data = db.Downloads.Where(a => true);
+            // Filter
+            var data = db.Downloads.AsNoTracking();
             if (filter.Format is not null)
                 data = data.Where(t => t.Format == filter.Format);
             if (filter.Username is not null)
@@ -180,7 +172,7 @@ public static class DownloadEndpoints
                         break;
                 }
 
-
+            // Sort
             switch (filter.SortBy)
             {
                 case SortByDownload.Id:
@@ -205,6 +197,7 @@ public static class DownloadEndpoints
                     break;
             }
 
+            // Pagination
             data = data
                 .Skip((filter.PaginationParams.PageNumber - 1) * filter.PaginationParams.PageSize)
                 .Take(filter.PaginationParams.PageSize);

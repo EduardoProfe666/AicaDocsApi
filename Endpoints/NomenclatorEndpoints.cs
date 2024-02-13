@@ -44,10 +44,11 @@ public static class NomenclatorEndpoints
                 FilterNomenclatorDto filter,
                 AicaDocsDb db, CancellationToken ct)
         {
-            var data = db.Nomenclators.Where(a => true);
+
+            var data = db.Nomenclators.AsNoTracking();
             if (filter.Type is not null)
                 data = data.Where(a => a.Type == filter.Type);
-
+            
             switch (filter.SortBy)
             {
                 case SortByNomenclator.Id:
@@ -80,7 +81,7 @@ public static class NomenclatorEndpoints
         static async Task<Results<Ok<ApiResponse<Nomenclator>>, NotFound<ApiResponse>>> GetNomenclatorById(
             int id, AicaDocsDb db, CancellationToken ct)
         {
-            var data = await db.Nomenclators.FirstOrDefaultAsync(a => a.Id == id, ct);
+            var data = await db.Nomenclators.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id, ct);
             if (data is null)
                 return TypedResults.NotFound(new ApiResponse()
                 {
@@ -112,7 +113,7 @@ public static class NomenclatorEndpoints
             NomenclatorUpdateDto nomenclator,
             AicaDocsDb db, CancellationToken ct)
         {
-            var data = await db.Nomenclators.FirstOrDefaultAsync(a => a.Id == id, cancellationToken: ct);
+            var data = await db.Nomenclators.AsQueryable().FirstOrDefaultAsync(a => a.Id == id, cancellationToken: ct);
             if (data is null)
                 return TypedResults.NotFound(new ApiResponse()
                 {

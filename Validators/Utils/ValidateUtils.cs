@@ -15,7 +15,7 @@ public class ValidateUtils
 
     public async Task<bool> ValidateNomenclatorId(int? id, TypeOfNomenclator type, CancellationToken ct)
     {
-        var nomenclator = await _db.Nomenclators.FirstOrDefaultAsync(n => n.Id == id, cancellationToken: ct);
+        var nomenclator = await _db.Nomenclators.AsNoTracking().FirstOrDefaultAsync(n => n.Id == id, cancellationToken: ct);
         return nomenclator is not null && nomenclator.Type == type;
 
     }
