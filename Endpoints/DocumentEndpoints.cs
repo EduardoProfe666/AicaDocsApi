@@ -4,16 +4,12 @@ using AicaDocsApi.Dto.Documents.Filter;
 using AicaDocsApi.Dto.FilterCommons;
 using AicaDocsApi.Models;
 using AicaDocsApi.Responses;
-using AicaDocsApi.Utils;
 using AicaDocsApi.Utils.BlobServices;
 using AicaDocsApi.Validators.Commons;
 using AicaDocsApi.Validators.Utils;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Minio;
-using Minio.DataModel.Args;
-using SautinSoft;
 
 namespace AicaDocsApi.Endpoints;
 

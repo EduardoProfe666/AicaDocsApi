@@ -69,10 +69,10 @@ Para poder configurar la conexión a MinIO siga los siguientes pasos:
 }
     (...),
     "Minio": {
-       "endpoint": "INFO",
-       "accessKey": "INFO",
-       "secretKey": "INFO",
-       "bucket": "INFO"
+       "Endpoint": "INFO",
+       "AccessKey": "INFO",
+       "SecretKey": "INFO",
+       "Bucket": "INFO"
     }
 }
 ```
@@ -83,10 +83,10 @@ usando los siguientes datos en el archivo `appsettings.json`:
 }
     (...),
     "Minio": {
-       "endpoint": "play.min.io",
-       "accessKey": "testuser",
-       "secretKey": "testuser",
-       "bucket": "aica-docs"
+       "Endpoint": "play.min.io",
+       "AccessKey": "testuser",
+       "SecretKey": "testuser",
+       "Bucket": "aica-docs"
     }
 }
 ```
