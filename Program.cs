@@ -1,6 +1,7 @@
 using AicaDocsApi.Database;
 using AicaDocsApi.Endpoints;
 using AicaDocsApi.Utils.BlobServices;
+using AicaDocsApi.Utils.BlobServices.Minio;
 using AicaDocsApi.Validators.Utils;
 using FluentValidation;
 using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
@@ -21,16 +22,8 @@ builder.Services.AddDbContext<AicaDocsDb>(x =>
 // builder.Services.AddDbContext<AicaDocsDb>(opt => opt.UseInMemoryDatabase("AicaDocs"));
 
 // Blob Services
-builder.Services.AddSingleton<IBlobService, MinionBlobService>(sp =>
-{
-    var minioInfo = builder.Configuration.GetSection("Minio");
-    var minioClient = new MinioClient()
-        .WithEndpoint(minioInfo["endpoint"])
-        .WithCredentials(minioInfo["accessKey"], minioInfo["secretKey"])
-        .WithSSL(false)
-        .Build();
-    return new MinionBlobService(minioInfo["bucket"]!, minioClient);
-});
+builder.Services.Configure<MinioOptions>(builder.Configuration.GetSection("Minio"));
+builder.Services.AddScoped<IBlobService, MinioBlobService>();
 
 // General Configuration Services
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
