@@ -25,6 +25,7 @@ builder.Services.AddDbContext<AicaDocsDb>(x =>
 builder.Services.Configure<MinioOptions>(builder.Configuration.GetSection("Minio"));
 builder.Services.AddScoped<IBlobService, MinioBlobService>();
 
+
 // General Configuration Services
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddEndpointsApiExplorer();
