@@ -1,5 +1,4 @@
-using AicaDocsApi.Models;
-using Spire.Pdf;
+using SautinSoft;
 
 namespace AicaDocsApi.Dto.Documents;
 
@@ -16,14 +15,15 @@ public class DocumentCreatedDto
 
     public required IFormFile Pdf { get; set; }
 
-    public Document ToNewDocument()
+    public Models.Document ToNewDocument()
     {
         using var pdfStream = Pdf.OpenReadStream();
-        var pdf = new PdfDocument();
-        pdf.LoadFromStream(pdfStream);
-        var pages = pdf.Pages.Count;
+        var pdfFocus = new PdfFocus();
+        pdfFocus.OpenPdf(pdfStream);
+        var pages = pdfFocus.PageCount;
+        pdfFocus.ClosePdf();
 
-        return new Document
+        return new Models.Document
         {
             Code = Code, Edition = (short)Edition, Pages = (short)pages, Title = Title,
             DateOfValidity = DateOfValidity.UtcDateTime,
