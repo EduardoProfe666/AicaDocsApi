@@ -27,7 +27,8 @@ builder.Services.AddSingleton<IBlobService, MinionBlobService>(sp =>
     var minioClient = new MinioClient()
         .WithEndpoint(minioInfo["endpoint"])
         .WithCredentials(minioInfo["accessKey"], minioInfo["secretKey"])
-        .WithSSL(false);
+        .WithSSL(false)
+        .Build();
     return new MinionBlobService(minioInfo["bucket"]!, minioClient);
 });
 
