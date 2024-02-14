@@ -21,23 +21,73 @@ public static class DocumentEndpoints
             .WithOpenApi()
             .WithTags(["Documents"]);
 
-        // ToDo: Quitar este endpoint en despliegue
-        group.MapGet("", async (AicaDocsDb db, CancellationToken ct) => await db.Documents.ToListAsync(ct))
-            .WithSummary("ONLY FOR TESTING. Get all documents");
+        // ---------------- Endpoint Declarations --------------------//
+
+        group.MapGet("/{id:int}", GetDocumentById)
+            .WithSummary("Get the document with the given id")
+            .WithDescription("""
+                             This endpoint allows you to get the document with the given **id**.
+                             """);
 
         group.MapPost("/filter", FilterDocument)
             .WithSummary("Get documents with specific filters, sorts and pagination")
-            .AddEndpointFilter<ValidationFilter<FilterDocumentDto>>();
+            .AddEndpointFilter<ValidationFilter<FilterDocumentDto>>()
+            .WithDescription("""
+                             This endpoint allows you to get documents with the given filters, sorts and
+                             pagination.
 
+                             The type of nomenclator asociated with the
+                             type of document (**typeId**) must be **3**.
 
-        group.MapGet("/{id:int}", GetDocumentById)
-            .WithSummary("Get the document with the given id");
+                             The type of nomenclator asociated with the
+                             process of document (**processId**) must be **0**.
+
+                             The type of nomenclator asociated with the
+                             scope of download (**scopeId**) must be **2**.
+
+                             The valid sort by variants (**sortBy**) are:
+                             - **0** -> Id
+                             - **1** -> DateDownload
+                             - **2** -> Format
+                             - **3** -> Username
+
+                             The valid sort order variants (**sortOrder**) are:
+                             - **0** -> Asc
+                             - **1** -> Desc
+
+                             The valid date comparator variants (**dateComparator**)
+                             that is used in the filter of dateDownload are:
+                             - **0** -> Equal
+                             - **1** -> Greater
+                             - **2** -> Greater or Equal
+                             - **3** -> Less
+                             - **4** -> Less or Equal
+                             """);
 
         group.MapPost("", PostDocument)
             .WithSummary("Create a new document")
             .AddEndpointFilter<ValidationFilter<DocumentCreatedDto>>()
-            .DisableAntiforgery();
+            .DisableAntiforgery()
+            .WithDescription("""
+                             This endpoint allows you to create a new document with the given body.
 
+                             The code + edition must be unique.
+
+                             The word must have **.docx** extension.
+
+                             The type of nomenclator asociated with the
+                             type of document (**typeId**) must be **3**.
+
+                             The type of nomenclator asociated with the
+                             process of document (**processId**) must be **0**.
+
+                             The type of nomenclator asociated with the
+                             scope of download (**scopeId**) must be **2**.
+                             """);
+
+        // -------------------------- Endpoints Functions ---------------------------------- //
+
+        // --------- Get document by id --------- //
         static async Task<Results<Ok<ApiResponse<Document>>, NotFound<ApiResponse>>> GetDocumentById(int id,
             AicaDocsDb db,
             CancellationToken ct)
@@ -64,66 +114,7 @@ public static class DocumentEndpoints
             });
         }
 
-        static async Task<Results<Created, BadRequest<ApiResponse>>> PostDocument(
-            [FromForm] DocumentCreatedDto doc,
-            AicaDocsDb db,
-            ValidateUtils vu,
-            IBlobService bs,
-            CancellationToken ct)
-        {
-            var validation = await db.Documents.AsNoTracking().FirstOrDefaultAsync(
-                a => a.Code + a.Edition == doc.Code + doc.Edition,
-                cancellationToken: ct) is not null;
-            if (validation)
-                return TypedResults.BadRequest(new ApiResponse()
-                {
-                    ProblemDetails = new()
-                    {
-                        Status = 400, Errors = new Dictionary<string, string[]>
-                        {
-                            { "Code-Edition", ["Code+Edition must be unique"] }
-                        }
-                    }
-                });
-
-            var errorMessages = new List<string>();
-            validation = !await vu.ValidateNomenclatorId(doc.TypeId, TypeOfNomenclator.TypeOfDocument, ct);
-            if (validation)
-                errorMessages.Add("Type of document must be valid");
-
-            validation = !await vu.ValidateNomenclatorId(doc.ProcessId, TypeOfNomenclator.ProcessOfDocument, ct);
-            if (validation)
-                errorMessages.Add("Process of document must be valid");
-
-            validation = !await vu.ValidateNomenclatorId(doc.ScopeId, TypeOfNomenclator.ScopeOfDocument, ct);
-            if (validation)
-                errorMessages.Add("Scope of document must be valid");
-
-            if (errorMessages.Count > 0)
-                return TypedResults.BadRequest(new ApiResponse()
-                {
-                    ProblemDetails = new()
-                    {
-                        Status = 400, Errors = new Dictionary<string, string[]>
-                        {
-                            { "Nomenclators", errorMessages.ToArray() }
-                        }
-                    }
-                });
-
-            var fileName = doc.Code + doc.Edition;
-
-
-            await bs.UploadObject(doc.Pdf, fileName, ct);
-            await bs.UploadObject(doc.Word, fileName, ct);
-
-            db.Documents.Add(doc.ToNewDocument());
-            await db.SaveChangesAsync(ct);
-
-            return TypedResults.Created();
-        }
-
-
+        // ----------- Filter, Sort and Paginate Documents --------- //
         static async Task<Results<Ok<ApiResponse<IEnumerable<Document>>>, BadRequest<ApiResponse>>>
             FilterDocument(
                 FilterDocumentDto filter,
@@ -162,9 +153,9 @@ public static class DocumentEndpoints
             // Filter
             var data = db.Documents.AsNoTracking();
             if (filter.Code is not null)
-                data = data.Where(t => t.Code.Contains(filter.Code.Trim()));
+                data = data.Where(t => t.Code.ToLower().Contains(filter.Code.ToLower().Trim()));
             if (filter.Title is not null)
-                data = data.Where(t => t.Title.Contains(filter.Title.Trim()));
+                data = data.Where(t => t.Title.ToLower().Contains(filter.Title.ToLower().Trim()));
             if (filter.Edition is not null)
                 data = data.Where(t => t.Edition == filter.Edition);
             if (filter.Pages is not null)
@@ -239,6 +230,66 @@ public static class DocumentEndpoints
             {
                 Data = await data.ToListAsync(cancellationToken: ct)
             });
+        }
+
+        // -------- Create a new document -------- //
+        static async Task<Results<Created, BadRequest<ApiResponse>>> PostDocument(
+            [FromForm] DocumentCreatedDto doc,
+            AicaDocsDb db,
+            ValidateUtils vu,
+            IBlobService bs,
+            CancellationToken ct)
+        {
+            var validation = await db.Documents.AsNoTracking().FirstOrDefaultAsync(
+                a => a.Code + a.Edition == doc.Code + doc.Edition,
+                cancellationToken: ct) is not null;
+            if (validation)
+                return TypedResults.BadRequest(new ApiResponse()
+                {
+                    ProblemDetails = new()
+                    {
+                        Status = 400, Errors = new Dictionary<string, string[]>
+                        {
+                            { "Code-Edition", ["Code+Edition must be unique"] }
+                        }
+                    }
+                });
+
+            var errorMessages = new List<string>();
+            validation = !await vu.ValidateNomenclatorId(doc.TypeId, TypeOfNomenclator.TypeOfDocument, ct);
+            if (validation)
+                errorMessages.Add("Type of document must be valid");
+
+            validation = !await vu.ValidateNomenclatorId(doc.ProcessId, TypeOfNomenclator.ProcessOfDocument, ct);
+            if (validation)
+                errorMessages.Add("Process of document must be valid");
+
+            validation = !await vu.ValidateNomenclatorId(doc.ScopeId, TypeOfNomenclator.ScopeOfDocument, ct);
+            if (validation)
+                errorMessages.Add("Scope of document must be valid");
+
+            if (errorMessages.Count > 0)
+                return TypedResults.BadRequest(new ApiResponse()
+                {
+                    ProblemDetails = new()
+                    {
+                        Status = 400, Errors = new Dictionary<string, string[]>
+                        {
+                            { "Nomenclators", errorMessages.ToArray() }
+                        }
+                    }
+                });
+
+            var fileName = doc.Code + doc.Edition;
+
+
+            await bs.UploadObject(doc.Pdf, fileName, ct);
+            await bs.UploadObject(doc.Word, fileName, ct);
+
+            db.Documents.Add(doc.ToNewDocument());
+            await db.SaveChangesAsync(ct);
+
+            return TypedResults.Created();
         }
     }
 }

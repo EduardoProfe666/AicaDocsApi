@@ -20,80 +20,64 @@ public static class DownloadEndpoints
             .WithOpenApi()
             .WithTags(["Downloads"]);
 
-        // ToDo: Quitar este endpoint en despliegue
-        group.MapGet("", async (AicaDocsDb db, CancellationToken ct) => await db.Downloads.ToListAsync(ct))
-            .WithSummary("ONLY FOR TESTING. Get all downloads");
+        // ---------------- Endpoint Declarations --------------------//
+
+        group.MapGet("/{id:int}", GetDownloadById)
+            .WithSummary("Get the download with the given id")
+            .WithDescription("""
+                             This endpoint allows you to get the download with the given **id**.
+                             """);
 
         group.MapPost("/filter", FilterDownload)
             .WithSummary("Get downloads with specific filters, sorts and pagination")
-            .AddEndpointFilter<ValidationFilter<FilterDownloadDto>>();
+            .AddEndpointFilter<ValidationFilter<FilterDownloadDto>>()
+            .WithDescription("""
+                             This endpoint allows you to get downloads with the given filters, sorts and 
+                             pagination.
 
-        group.MapGet("/{id:int}", GetDownloadById)
-            .WithSummary("Get the download with the given id");
+                             The valid formats of download (**format**) are:
+                             - **0** -> Pdf
+                             - **1** -> Word
+
+                             The type of nomenclator asociated with the 
+                             reason of download (**reasonId**) must be **1**.
+                             
+                             The valid sort by variants (**sortBy**) are:
+                             - **0** -> Id
+                             - **1** -> DateDownload
+                             - **2** -> Format
+                             - **3** -> Username
+                             
+                             The valid sort order variants (**sortOrder**) are:
+                             - **0** -> Asc
+                             - **1** -> Desc
+                             
+                             The valid date comparator variants (**dateComparator**)
+                             that is used in the filter of dateDownload are:
+                             - **0** -> Equal
+                             - **1** -> Greater
+                             - **2** -> Greater or Equal
+                             - **3** -> Less
+                             - **4** -> Less or Equal
+                             """);
 
         group.MapPost("", PostDownloadDocument)
             .WithSummary("Download a document in the specified format")
-            .AddEndpointFilter<ValidationFilter<DownloadCreatedDto>>();
+            .AddEndpointFilter<ValidationFilter<DownloadCreatedDto>>()
+            .WithDescription("""
+                             This endpoint allows you to create a new download with the given body.
 
-        static async Task<Results<Ok<ApiResponse<string>>, NotFound<ApiResponse>, BadRequest<ApiResponse>>>
-            PostDownloadDocument(
-                DownloadCreatedDto dto, ValidateUtils vu,
-                IBlobService bs, AicaDocsDb db, CancellationToken ct)
-        {
-            var validation = !await vu.ValidateNomenclatorId(dto.ReasonId, TypeOfNomenclator.ReasonOfDownload, ct);
-            if (validation)
-                return TypedResults.BadRequest(new ApiResponse()
-                {
-                    ProblemDetails = new()
-                    {
-                        Status = 400, Errors = new Dictionary<string, string[]>
-                        {
-                            { "ReasonId", ["Reason Id must be valid"] }
-                        }
-                    }
-                });
+                             The valid formats of download (**format**) are:
+                             - **0** -> Pdf
+                             - **1** -> Word
 
-            var doc = await db.Documents.AsNoTracking()
-                .FirstOrDefaultAsync(e => e.Id == dto.DocumentId, cancellationToken: ct);
+                             The type of nomenclator asociated with the 
+                             reason of download (**reasonId**) must be **1**.
+                             """);
 
-            if (doc is null)
-            {
-                return TypedResults.NotFound(new ApiResponse()
-                {
-                    ProblemDetails = new()
-                    {
-                        Status = 404, Errors = new Dictionary<string, string[]>
-                        {
-                            { "Document Id", ["Doesn`t exist a document with the given id"] }
-                        }
-                    }
-                });
-            }
+        // -------------------------- Endpoints Functions ---------------------------------- //
 
-            var format = dto.Format == Format.Pdf ? "pdf" : "word";
-            var ext = dto.Format == Format.Pdf ? "pdf" : "docx";
-
-            var exists = await bs.ValidateExistanceObject($"/{format}/{doc.Code + doc.Edition}.{ext}", ct);
-            if (!exists)
-                return TypedResults.NotFound(new ApiResponse
-                {
-                    ProblemDetails = new()
-                    {
-                        Status = 404, Errors = new Dictionary<string, string[]>
-                        {
-                            { "Document Existance", [$"Doesn`t exist a file document with the given specifications."] }
-                        }
-                    }
-                });
-            
-            var url = await bs.PresignedGetUrl($"/{format}/{doc.Code + doc.Edition}.{ext}", ct);
-
-            db.Downloads.Add(dto.ToDownload());
-            await db.SaveChangesAsync(ct);
-
-            return TypedResults.Ok(new ApiResponse<string> { Data = url });
-        }
-
+        // ------------ Get download by id --------- //
         static async Task<Results<Ok<ApiResponse<Download>>, NotFound<ApiResponse>>> GetDownloadById(int id,
             AicaDocsDb db,
             CancellationToken ct)
@@ -120,6 +104,7 @@ public static class DownloadEndpoints
             });
         }
 
+        // ------------ Filter, Sort and Paginate Downloads --------- //
         static async Task<Results<Ok<ApiResponse<IEnumerable<Download>>>, BadRequest<ApiResponse>>>
             FilterDownload(
                 FilterDownloadDto filter,
@@ -147,7 +132,7 @@ public static class DownloadEndpoints
             if (filter.Format is not null)
                 data = data.Where(t => t.Format == filter.Format);
             if (filter.Username is not null)
-                data = data.Where(t => t.Username.Contains(filter.Username.Trim()));
+                data = data.Where(t => t.Username.ToLower().Contains(filter.Username.Trim().ToLower()));
             if (filter.DocumentId is not null)
                 data = data.Where(t => t.DocumentId == filter.DocumentId);
             if (filter.ReasonId is not null)
@@ -206,6 +191,66 @@ public static class DownloadEndpoints
             {
                 Data = await data.ToListAsync(cancellationToken: ct)
             });
+        }
+
+        // ------------ Create a new download --------- //
+        static async Task<Results<Ok<ApiResponse<string>>, NotFound<ApiResponse>, BadRequest<ApiResponse>>>
+            PostDownloadDocument(
+                DownloadCreatedDto dto, ValidateUtils vu,
+                IBlobService bs, AicaDocsDb db, CancellationToken ct)
+        {
+            var validation = !await vu.ValidateNomenclatorId(dto.ReasonId, TypeOfNomenclator.ReasonOfDownload, ct);
+            if (validation)
+                return TypedResults.BadRequest(new ApiResponse()
+                {
+                    ProblemDetails = new()
+                    {
+                        Status = 400, Errors = new Dictionary<string, string[]>
+                        {
+                            { "ReasonId", ["Reason Id must be valid"] }
+                        }
+                    }
+                });
+
+            var doc = await db.Documents.AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == dto.DocumentId, cancellationToken: ct);
+
+            if (doc is null)
+            {
+                return TypedResults.NotFound(new ApiResponse()
+                {
+                    ProblemDetails = new()
+                    {
+                        Status = 404, Errors = new Dictionary<string, string[]>
+                        {
+                            { "Document Id", ["Doesn`t exist a document with the given id"] }
+                        }
+                    }
+                });
+            }
+
+            var format = dto.Format == Format.Pdf ? "pdf" : "word";
+            var ext = dto.Format == Format.Pdf ? "pdf" : "docx";
+
+            var exists = await bs.ValidateExistanceObject($"/{format}/{doc.Code + doc.Edition}.{ext}", ct);
+            if (!exists)
+                return TypedResults.NotFound(new ApiResponse
+                {
+                    ProblemDetails = new()
+                    {
+                        Status = 404, Errors = new Dictionary<string, string[]>
+                        {
+                            { "Document Existance", [$"Doesn`t exist a file document with the given specifications."] }
+                        }
+                    }
+                });
+
+            var url = await bs.PresignedGetUrl($"/{format}/{doc.Code + doc.Edition}.{ext}", ct);
+
+            db.Downloads.Add(dto.ToDownload());
+            await db.SaveChangesAsync(ct);
+
+            return TypedResults.Ok(new ApiResponse<string> { Data = url });
         }
     }
 }

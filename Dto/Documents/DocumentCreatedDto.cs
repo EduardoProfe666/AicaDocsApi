@@ -27,7 +27,7 @@ public class DocumentCreatedDto
 
         return new Models.Document
         {
-            Code = Code, Edition = (short)Edition, Pages = (short)pages, Title = Title,
+            Code = Code.Trim(), Edition = (short)Edition, Pages = (short)pages, Title = Title.Trim(),
             DateOfValidity = DateOfValidity.UtcDateTime,
             TypeId = TypeId, ProcessId = ProcessId, ScopeId = ScopeId
         };

@@ -7,7 +7,9 @@ public static class GeneralEndpoints
         var group = app.MapGroup("")
             .WithTags(["General"])
             .WithOpenApi();
-
+        
+        // ---------------- Endpoint Declarations --------------------//
+        
         group.MapGet("/", () => Results.Redirect("/swagger/index.html")).ExcludeFromDescription();
         group.MapGet("/docs", () => Results.Redirect("/swagger/index.html")).ExcludeFromDescription();
         
