@@ -14,7 +14,7 @@ public class DownloadCreatedDto
         return new Download
         {
           Format  = Format,
-          Username = Username,
+          Username = Username.Trim(),
           DocumentId = DocumentId,
           ReasonId = ReasonId
         };
