@@ -17,6 +17,7 @@ public class DocumentCreatedDto
 
     public required IFormFile Word { get; set; }
 
+
     public Models.Document ToNewDocument()
     {
         using var pdfStream = Pdf.OpenReadStream();
