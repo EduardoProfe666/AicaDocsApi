@@ -61,5 +61,6 @@ app.MapGeneralEndpoints();
 app.MapDocumentEndpoints();
 app.MapDownloadEndpoints();
 app.MapNomenclatorEndpoints();
+app.MapPaginationEndpoints();
 
 app.Run();
