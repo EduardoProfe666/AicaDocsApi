@@ -223,6 +223,7 @@ public static class DocumentEndpoints
                     break;
             }
 
+            var count = data.Count();
             // Pagination
             data = data
                 .Skip((filter.PaginationParams.PageNumber - 1) * filter.PaginationParams.PageSize)
@@ -233,7 +234,7 @@ public static class DocumentEndpoints
                 Data = new()
                 {
                     Data = await data.ToListAsync(cancellationToken: ct),
-                    TotalPages = (int)Math.Ceiling((double)data.Count() / filter.PaginationParams.PageSize)
+                    TotalPages = (int)Math.Ceiling((double)count / filter.PaginationParams.PageSize)
                 } 
             });
         }
