@@ -102,6 +102,11 @@ Se realizó un despliegue de prueba de los 3 servicios básicos de la API:
 - Despliegue de la base de datos en [ElephantSQL](https://api.elephantsql.com/)
 - Despliegue del servidor de MinIO en [Railway](https://railway.app/)
 
+## 🎦 AicaDocs UI
+
+Se realizó una prueba en `Razor Pages` para ilustrar como sería un posible escenario
+de consumo de la api. La página se encuentra en el [siguiente enlace](https://aica-docs-ui.onrender.com)
+
 ## 👥 Autores
 <table>
     <tbody>
