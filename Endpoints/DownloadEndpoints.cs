@@ -32,26 +32,28 @@ public static class DownloadEndpoints
             .WithSummary("Get downloads with specific filters, sorts and pagination")
             .AddEndpointFilter<ValidationFilter<FilterDownloadDto>>()
             .WithDescription("""
-                             This endpoint allows you to get downloads with the given filters, sorts and 
+                             This endpoint allows you to get downloads with the given filters, sorts and
                              pagination.
+
+                             **TotalPages** data returned is the total count of pages with the current pageSize
 
                              The valid formats of download (**format**) are:
                              - **0** -> Pdf
                              - **1** -> Word
 
-                             The type of nomenclator asociated with the 
+                             The type of nomenclator asociated with the
                              reason of download (**reasonId**) must be **1**.
-                             
+
                              The valid sort by variants (**sortBy**) are:
                              - **0** -> Id
                              - **1** -> DateDownload
                              - **2** -> Format
                              - **3** -> Username
-                             
+
                              The valid sort order variants (**sortOrder**) are:
                              - **0** -> Asc
                              - **1** -> Desc
-                             
+
                              The valid date comparator variants (**dateComparator**)
                              that is used in the filter of dateDownload are:
                              - **0** -> Equal
@@ -71,7 +73,7 @@ public static class DownloadEndpoints
                              - **0** -> Pdf
                              - **1** -> Word
 
-                             The type of nomenclator asociated with the 
+                             The type of nomenclator asociated with the
                              reason of download (**reasonId**) must be **1**.
                              """);
 
@@ -105,7 +107,7 @@ public static class DownloadEndpoints
         }
 
         // ------------ Filter, Sort and Paginate Downloads --------- //
-        static async Task<Results<Ok<ApiResponse<IEnumerable<Download>>>, BadRequest<ApiResponse>>>
+        static async Task<Results<Ok<ApiResponse<FilterResponse<Download>>>, BadRequest<ApiResponse>>>
             FilterDownload(
                 FilterDownloadDto filter,
                 ValidateUtils vu,
@@ -187,9 +189,13 @@ public static class DownloadEndpoints
                 .Skip((filter.PaginationParams.PageNumber - 1) * filter.PaginationParams.PageSize)
                 .Take(filter.PaginationParams.PageSize);
 
-            return TypedResults.Ok(new ApiResponse<IEnumerable<Download>>
+            return TypedResults.Ok(new ApiResponse<FilterResponse<Download>>
             {
-                Data = await data.ToListAsync(cancellationToken: ct)
+                Data = new()
+                {
+                    Data = await data.ToListAsync(cancellationToken: ct),
+                    TotalPages = (int)Math.Ceiling((double)data.Count() / filter.PaginationParams.PageSize)
+                }
             });
         }
 

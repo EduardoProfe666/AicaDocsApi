@@ -35,7 +35,9 @@ public static class DocumentEndpoints
             .WithDescription("""
                              This endpoint allows you to get documents with the given filters, sorts and
                              pagination.
-
+                                
+                             **TotalPages** data returned is the total count of pages with the current pageSize
+                                
                              The type of nomenclator asociated with the
                              type of document (**typeId**) must be **3**.
 
@@ -115,7 +117,7 @@ public static class DocumentEndpoints
         }
 
         // ----------- Filter, Sort and Paginate Documents --------- //
-        static async Task<Results<Ok<ApiResponse<IEnumerable<Document>>>, BadRequest<ApiResponse>>>
+        static async Task<Results<Ok<ApiResponse<FilterResponse<Document>>>, BadRequest<ApiResponse>>>
             FilterDocument(
                 FilterDocumentDto filter,
                 ValidateUtils vu,
@@ -226,9 +228,13 @@ public static class DocumentEndpoints
                 .Skip((filter.PaginationParams.PageNumber - 1) * filter.PaginationParams.PageSize)
                 .Take(filter.PaginationParams.PageSize);
 
-            return TypedResults.Ok(new ApiResponse<IEnumerable<Document>>
+            return TypedResults.Ok(new ApiResponse<FilterResponse<Document>>
             {
-                Data = await data.ToListAsync(cancellationToken: ct)
+                Data = new()
+                {
+                    Data = await data.ToListAsync(cancellationToken: ct),
+                    TotalPages = (int)Math.Ceiling((double)data.Count() / filter.PaginationParams.PageSize)
+                } 
             });
         }
 
