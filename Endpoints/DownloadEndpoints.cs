@@ -184,6 +184,7 @@ public static class DownloadEndpoints
                     break;
             }
 
+            var count = data.Count();
             // Pagination
             data = data
                 .Skip((filter.PaginationParams.PageNumber - 1) * filter.PaginationParams.PageSize)
@@ -194,7 +195,7 @@ public static class DownloadEndpoints
                 Data = new()
                 {
                     Data = await data.ToListAsync(cancellationToken: ct),
-                    TotalPages = (int)Math.Ceiling((double)data.Count() / filter.PaginationParams.PageSize)
+                    TotalPages = (int)Math.Ceiling((double)count / filter.PaginationParams.PageSize)
                 }
             });
         }
