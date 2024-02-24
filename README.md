@@ -7,6 +7,7 @@
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 ![Render](https://img.shields.io/badge/Render-%46E3B7.svg?style=for-the-badge&logo=render&logoColor=white)
 ![Railway](https://img.shields.io/badge/Railway-131415?style=for-the-badge&logo=railway&logoColor=white)
+![Tests](https://camo.githubusercontent.com/d45e5cd139a4b5e58b24b34d0f345b9b5a062aadbf80b3948c8218ab2567b7a2/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f74657374732d31322532307061737365642d73756363657373)
 
 Proyecto de Práctica I de Ingeniería Informática.
 
