@@ -29,4 +29,26 @@
       <Folder Include="Report\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Remove="Tests\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="Tests\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Remove="Tests\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Tests\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Tests\AicaDocsApi.Tests\obj\AicaDocsApi.Tests.csproj.nuget.dgspec.json" />
+      <_ContentIncludedByDefault Remove="Tests\AicaDocsApi.Tests\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="Tests\AicaDocsApi.Tests\obj\project.packagespec.json" />
+    </ItemGroup>
+
 </Project>

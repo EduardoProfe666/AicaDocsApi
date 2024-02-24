@@ -8,9 +8,13 @@ public class AicaDocsDb : DbContext
     public AicaDocsDb(DbContextOptions<AicaDocsDb> options)
         : base(options) { }
 
-    public DbSet<Document> Documents => Set<Document>();
-    public DbSet<Download> Downloads => Set<Download>();
-    public DbSet<Nomenclator> Nomenclators => Set<Nomenclator>();
+    public AicaDocsDb()
+    {
+    }
+
+    public virtual DbSet<Document> Documents => Set<Document>();
+    public virtual DbSet<Download> Downloads => Set<Download>();
+    public virtual DbSet<Nomenclator> Nomenclators => Set<Nomenclator>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

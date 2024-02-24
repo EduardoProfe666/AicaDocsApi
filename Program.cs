@@ -63,3 +63,7 @@ app.MapDownloadEndpoints();
 app.MapNomenclatorEndpoints();
 
 app.Run();
+
+public partial class Program
+{
+}
