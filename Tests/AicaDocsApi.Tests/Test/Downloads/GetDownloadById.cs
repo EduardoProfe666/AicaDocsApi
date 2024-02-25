@@ -27,6 +27,7 @@ public class GetDownloadById : IClassFixture<CustomWebApplicationFactory>
         Assert.True(result.StatusCode == HttpStatusCode.OK);
 
         var content = await result.Content.ReadAsStringAsync();
+        Assert.NotNull(content);
         Assert.NotEmpty(content);
 
         var download =
