@@ -98,7 +98,7 @@ usando los siguientes datos en el archivo `appsettings.json`:
 > no es para el uso extensivo de la misma.
 
 Se realizó un despliegue de prueba de los 3 servicios básicos de la API:
-- Despliegue del servidor Asp.Net en [Render](https://aica-docs.onrender.com/)
+- Despliegue del servidor Asp.Net en [Render](https://aicadocs.onrender.com/)
 - Despliegue de la base de datos en [ElephantSQL](https://api.elephantsql.com/)
 - Despliegue del servidor de MinIO en [Railway](https://railway.app/)
 
