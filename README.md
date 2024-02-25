@@ -7,6 +7,7 @@
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 ![Render](https://img.shields.io/badge/Render-%46E3B7.svg?style=for-the-badge&logo=render&logoColor=white)
 ![Railway](https://img.shields.io/badge/Railway-131415?style=for-the-badge&logo=railway&logoColor=white)
+![Test](https://camo.githubusercontent.com/74e33d88a7827d2fafccfcd9325060bc2a1d219d4afa14a71c8852bd876ebe49/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f74657374732d32332532307061737365642d73756363657373)
 
 Proyecto de Práctica I de Ingeniería Informática.
 
@@ -106,6 +107,11 @@ Se realizó un despliegue de prueba de los 3 servicios básicos de la API:
 
 Se realizó una prueba en `Razor Pages` para ilustrar como sería un posible escenario
 de consumo de la api. La página se encuentra en el [siguiente enlace](https://aica-docs-ui.onrender.com)
+
+## 🎯 Pruebas de integración automatizadas
+
+Se diseñaron y ejecutaron pruebas de integración automatizadas a la api en la rama <Lilian>. 
+El último resultado de las pruebas se encuentra en el ![siguiente enlace](https://github.com/EduardoProfe666/AicaDocsApi/runs/21948336273#r0)
 
 ## 👥 Autores
 <table>
