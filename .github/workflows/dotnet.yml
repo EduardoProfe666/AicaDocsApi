@@ -3,10 +3,10 @@ name: Automatic .Net Tests
 on:
   push:
     branches: 
-      - Lilian
+      - test
   pull_request:
     branches: 
-      - Lilian 
+      - test
   workflow_dispatch:
 
 jobs:
