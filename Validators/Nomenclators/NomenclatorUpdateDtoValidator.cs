@@ -3,7 +3,7 @@ using FluentValidation;
 
 namespace AicaDocsApi.Validators.Nomenclators;
 
-public class NomenclatorUpdateDtoValidator : AbstractValidator<NomenclatorPatchDto>
+public class NomenclatorUpdateDtoValidator : AbstractValidator<NomenclatorPutDto>
 {
     public NomenclatorUpdateDtoValidator()
     {

@@ -140,24 +140,27 @@ public static class DownloadEndpoints
             if (filter.ReasonId is not null)
                 data = data.Where(t => t.ReasonId == filter.ReasonId);
             if (filter.DateDownload is not null)
+            {
+                DateTimeOffset date = filter.DateDownload.Value.ToUniversalTime();
                 switch (filter.DateComparator)
                 {
                     case DateComparator.Equal:
-                        data = data.Where(t => t.DateOfDownload == filter.DateDownload);
+                        data = data.Where(t => t.DateOfDownload == date);
                         break;
                     case DateComparator.Greater:
-                        data = data.Where(t => t.DateOfDownload > filter.DateDownload);
+                        data = data.Where(t => t.DateOfDownload > date);
                         break;
                     case DateComparator.Less:
-                        data = data.Where(t => t.DateOfDownload < filter.DateDownload);
+                        data = data.Where(t => t.DateOfDownload < date);
                         break;
                     case DateComparator.EqualGreater:
-                        data = data.Where(t => t.DateOfDownload >= filter.DateDownload);
+                        data = data.Where(t => t.DateOfDownload >= date);
                         break;
                     case DateComparator.EqualLess:
-                        data = data.Where(t => t.DateOfDownload <= filter.DateDownload);
+                        data = data.Where(t => t.DateOfDownload <= date);
                         break;
                 }
+            }
 
             // Sort
             switch (filter.SortBy)

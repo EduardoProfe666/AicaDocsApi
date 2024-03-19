@@ -29,7 +29,7 @@ public class DocumentCreatedDto
         return new Models.Document
         {
             Code = Code.Trim(), Edition = (short)Edition, Pages = (short)pages, Title = Title.Trim(),
-            DateOfValidity = DateOfValidity.UtcDateTime,
+            DateOfValidity = DateOfValidity.ToUniversalTime(),
             TypeId = TypeId, ProcessId = ProcessId, ScopeId = ScopeId
         };
     }

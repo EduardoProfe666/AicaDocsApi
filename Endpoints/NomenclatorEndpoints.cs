@@ -56,11 +56,11 @@ public static class NomenclatorEndpoints
                              - **3** -> Type of Document
                              """);
 
-        group.MapPatch("/{id:int}", PatchNomenclator)
-            .WithSummary("Patch the name of the nomenclator with the given id")
-            .AddEndpointFilter<ValidationFilter<NomenclatorPatchDto>>()
+        group.MapPut("/{id:int}", PutNomenclator)
+            .WithSummary("Edit the name of the nomenclator with the given id")
+            .AddEndpointFilter<ValidationFilter<NomenclatorPutDto>>()
             .WithDescription("""
-                             This endpoint allows you to patch the **name** of the nomenclator with
+                             This endpoint allows you to edit the **name** of the nomenclator with
                              the given **id**.
                              """);
 
@@ -139,9 +139,9 @@ public static class NomenclatorEndpoints
             return TypedResults.Created();
         }
 
-        // ---------- Patch name of nomenclator ---------- //
-        static async Task<Results<Ok, NotFound<ApiResponse>, BadRequest<ApiResponse>>> PatchNomenclator(int id,
-            NomenclatorPatchDto nomenclator,
+        // ---------- Put name of nomenclator ---------- //
+        static async Task<Results<Ok, NotFound<ApiResponse>, BadRequest<ApiResponse>>> PutNomenclator(int id,
+            NomenclatorPutDto nomenclator,
             AicaDocsDb db, CancellationToken ct)
         {
             var data = await db.Nomenclators.AsQueryable().FirstOrDefaultAsync(a => a.Id == id, cancellationToken: ct);

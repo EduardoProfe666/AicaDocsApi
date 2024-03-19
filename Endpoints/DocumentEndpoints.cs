@@ -169,24 +169,27 @@ public static class DocumentEndpoints
             if (filter.ScopeId is not null)
                 data = data.Where(t => t.ScopeId == filter.ScopeId);
             if (filter.DateOfValidity is not null)
+            {
+                DateTimeOffset date = filter.DateOfValidity.Value.ToUniversalTime();
                 switch (filter.DateComparator)
                 {
                     case DateComparator.Equal:
-                        data = data.Where(t => t.DateOfValidity == filter.DateOfValidity);
+                        data = data.Where(t => t.DateOfValidity == date);
                         break;
                     case DateComparator.Greater:
-                        data = data.Where(t => t.DateOfValidity > filter.DateOfValidity);
+                        data = data.Where(t => t.DateOfValidity > date);
                         break;
                     case DateComparator.Less:
-                        data = data.Where(t => t.DateOfValidity < filter.DateOfValidity);
+                        data = data.Where(t => t.DateOfValidity < date);
                         break;
                     case DateComparator.EqualGreater:
-                        data = data.Where(t => t.DateOfValidity >= filter.DateOfValidity);
+                        data = data.Where(t => t.DateOfValidity >= date);
                         break;
                     case DateComparator.EqualLess:
-                        data = data.Where(t => t.DateOfValidity <= filter.DateOfValidity);
+                        data = data.Where(t => t.DateOfValidity <= date);
                         break;
                 }
+            }
 
             // Sort 
             switch (filter.SortBy)
