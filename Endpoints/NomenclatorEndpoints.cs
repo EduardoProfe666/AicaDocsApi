@@ -55,7 +55,19 @@ public static class NomenclatorEndpoints
                              - **2** -> Scope of Document
                              - **3** -> Type of Document
                              """);
-
+        
+        group.MapDelete("/{type}/{id:int}", DeleteNomenclator)
+            .WithSummary("Delete a nomenclator with the given type and id")
+            .WithDescription("""
+                             This endpoint allows you to delete a nomenclator with the given **type** and **id**
+                             
+                             The valid types of nomenclators (**type**) are:
+                             - **0** -> Process of Document
+                             - **1** -> Reason of Download
+                             - **2** -> Scope of Document
+                             - **3** -> Type of Document
+                             """);
+        
         group.MapPut("/{id:int}", PutNomenclator)
             .WithSummary("Edit the name of the nomenclator with the given id")
             .AddEndpointFilter<ValidationFilter<NomenclatorPutDto>>()
@@ -137,6 +149,78 @@ public static class NomenclatorEndpoints
                 ct);
             await db.SaveChangesAsync(ct);
             return TypedResults.Created();
+        }
+        
+        // -------- Delete a nomenclator --------- //
+        static async Task<Results<Ok, BadRequest<ApiResponse>, NotFound<ApiResponse>>> DeleteNomenclator(short type, int id, AicaDocsDb db,
+            CancellationToken ct)
+        {
+            if (!Enum.IsDefined(typeof(TypeOfNomenclator), type))
+
+                return TypedResults.BadRequest(new ApiResponse
+                {
+                    ProblemDetails = new ProblemDetails
+                    {
+                        Status = 400,
+                        Errors = new Dictionary<string, string[]>
+                        {
+                            { "Nomenclator Type", ["Type of Nomenclator must be valid"] }
+                        }
+                    }
+                });
+
+            var data = await db.Nomenclators.AsNoTracking()
+                .FirstOrDefaultAsync(a => a.Id == id && a.Type == (TypeOfNomenclator)type, ct);
+            if (data is null)
+                return TypedResults.NotFound(new ApiResponse()
+                {
+                    ProblemDetails = new()
+                    {
+                        Status = 404,
+                        Errors = new Dictionary<string, string[]>
+                        {
+                            { "Nomenclator Id | Type", ["Doesn't exist a nomenclator with the given Id and Type"] }
+                        }
+                    }
+                });
+
+            var error = false;
+            switch((TypeOfNomenclator)type)
+            {
+                case TypeOfNomenclator.ProcessOfDocument:
+                    error = (await db.Documents.AsNoTracking().FirstOrDefaultAsync(a=>a.ProcessId==id,cancellationToken: ct)) is not null ;
+                    break;
+                case TypeOfNomenclator.ReasonOfDownload:
+                    error = (await db.Downloads.AsNoTracking().FirstOrDefaultAsync(a=>a.ReasonId==id,cancellationToken: ct)) is not null ;
+                    break;
+                
+                case TypeOfNomenclator.ScopeOfDocument:
+                    error = (await db.Documents.AsNoTracking().FirstOrDefaultAsync(a=>a.ScopeId==id,cancellationToken: ct)) is not null ;
+                    break;
+                
+                case TypeOfNomenclator.TypeOfDocument:
+                    error = (await db.Documents.AsNoTracking().FirstOrDefaultAsync(a=>a.TypeId==id,cancellationToken: ct)) is not null ;
+                    break;
+            }
+
+            if (error)
+            {
+                return TypedResults.BadRequest(new ApiResponse
+                {
+                    ProblemDetails = new ProblemDetails
+                    {
+                        Status = 400,
+                        Errors = new Dictionary<string, string[]>
+                        {
+                            { "Nomenclator", ["Nomenclator selected is being used"] }
+                        }
+                    }
+                });
+            }
+
+            db.Nomenclators.Remove(data);
+            await db.SaveChangesAsync(ct);
+            return TypedResults.Ok();
         }
 
         // ---------- Put name of nomenclator ---------- //
