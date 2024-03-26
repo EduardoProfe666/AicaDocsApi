@@ -1,9 +1,11 @@
 using AicaDocsApi.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace AicaDocsApi.Database;
 
-public class AicaDocsDb : DbContext
+public class AicaDocsDb : IdentityDbContext<User, IdentityRole, string>
 {
     public AicaDocsDb(DbContextOptions<AicaDocsDb> options)
         : base(options) { }
@@ -14,6 +16,8 @@ public class AicaDocsDb : DbContext
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+        
         // Document
         modelBuilder.Entity<Nomenclator>()
             .HasMany<Document>()

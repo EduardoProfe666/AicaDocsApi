@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using AicaDocsApi.Database;
 using AicaDocsApi.Dto.Downloads;
 using AicaDocsApi.Dto.Downloads.Filter;
@@ -18,7 +19,8 @@ public static class DownloadEndpoints
     {
         var group = app.MapGroup("/download")
             .WithOpenApi()
-            .WithTags(["Downloads"]);
+            .WithTags(["Downloads"])
+            .RequireAuthorization("api");
 
         // ---------------- Endpoint Declarations --------------------//
 
@@ -206,6 +208,7 @@ public static class DownloadEndpoints
         // ------------ Create a new download --------- //
         static async Task<Results<Ok<ApiResponse<string>>, NotFound<ApiResponse>, BadRequest<ApiResponse>>>
             PostDownloadDocument(
+                ClaimsPrincipal user,
                 DownloadCreatedDto dto, ValidateUtils vu,
                 IBlobService bs, AicaDocsDb db, CancellationToken ct)
         {
@@ -257,7 +260,13 @@ public static class DownloadEndpoints
 
             var url = await bs.PresignedGetUrl($"/{format}/{doc.Code + doc.Edition}.{ext}", ct);
 
-            db.Downloads.Add(dto.ToDownload());
+            db.Downloads.Add(new Download
+            {
+                Format = dto.Format,
+                Username = user.Identity!.Name!,
+                DocumentId = dto.DocumentId,
+                ReasonId = dto.ReasonId
+            });
             await db.SaveChangesAsync(ct);
 
             return TypedResults.Ok(new ApiResponse<string> { Data = url });

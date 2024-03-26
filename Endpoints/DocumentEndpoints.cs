@@ -19,7 +19,8 @@ public static class DocumentEndpoints
     {
         var group = app.MapGroup("/document")
             .WithOpenApi()
-            .WithTags(["Documents"]);
+            .WithTags(["Documents"])
+            .RequireAuthorization("api");
 
         // ---------------- Endpoint Declarations --------------------//
 

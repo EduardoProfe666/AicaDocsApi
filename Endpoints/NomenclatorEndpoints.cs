@@ -14,7 +14,8 @@ public static class NomenclatorEndpoints
     {
         var group = app.MapGroup("/nomenclator")
             .WithOpenApi()
-            .WithTags(["Nomenclators"]);
+            .WithTags(["Nomenclators"])
+            .RequireAuthorization("api");
         
         // ---------------- Endpoint Declarations --------------------//
         

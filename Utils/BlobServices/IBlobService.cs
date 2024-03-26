@@ -1,5 +1,3 @@
-using AicaDocsApi.Models;
-
 namespace AicaDocsApi.Utils.BlobServices;
 
 public interface IBlobService
